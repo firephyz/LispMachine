@@ -4,18 +4,7 @@
 
 #define REPL_BUFFER_SIZE 1024
 
-extern LispMachine machine;
-
-Cell * cons(Cell *cell1, Cell *cell2) {
-	// Get the next availble cell from the store
-	Cell *cell = machine.store;
-	machine.store = machine.store->cdr; // Update store
-
-	cell->car = cell1;
-	cell->cdr = cell2;
-
-	return cell;
-}
+LispMachine machine;
 
 void initMachine() {
 	machine.store = NULL;
@@ -29,4 +18,19 @@ void initMachine() {
 	for(int i = 0; i < HEAP_SIZE_IN_CELLS; ++i) {
 		setCell(machine.store + i, NIL, NULL, machine.store + i + 1);
 	}
+}
+
+void executeMachine() {
+
+}
+
+Cell * cons(Cell *cell1, Cell *cell2) {
+	// Get the next availble cell from the store
+	Cell *cell = machine.store;
+	machine.store = machine.store->cdr; // Update store
+
+	cell->car = cell1;
+	cell->cdr = cell2;
+
+	return cell;
 }

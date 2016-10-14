@@ -14,6 +14,7 @@
 
 	Cell * cons(Cell *cell1, Cell *cell2);
 	void initMachine();
+	void executeMachine();
 
 	#include "repl.h"
 

@@ -2,7 +2,7 @@
 #include "expr_parser.h"
 #include <stdio.h>
 
-LispMachine machine;
+extern LispMachine machine;
 
 int main() {
 
@@ -14,7 +14,11 @@ int main() {
 		printf(">>> ");
 		fgets(machine.replBuffer, REPL_BUFFER_SIZE, stdin);
 
+		// Parse the input and translate it into internal machine s-expressions
 		parseExpr(machine.replBuffer);
+
+		// Instruct machine to process the s-expressions
+		executeMachine();
 	}
 }
 
