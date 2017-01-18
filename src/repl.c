@@ -1,49 +1,122 @@
+/* To-Do
+ *
+ * Implement the following functions: car, cdr, cons, eq?, atom?, quote, lambda, cond
+ *
+ *
+ */
+
+
+#define _POSIX_C_SOURCE 1
+#include "repl.h"
 #include "lisp_machine.h"
 #include "expr_parser.h"
+#include "stack.h"
+#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-extern LispMachine machine;
+bool quiet_flag;
+Lisp_Machine * machine;
 
-int main() {
+int main(int argc, char * argv[]) {
 
-	// Set up memory and the like
-	initMachine();
+	// Init variables and the machine
+	process_args(argc, argv);
 
-	// _Present the repl
-	while(machine.running) {
-		printf(">>> ");
-		fgets(machine.replBuffer, REPL_BUFFER_SIZE, stdin);
-
-		// Parse the input and translate it into internal machine s-expressions
-		parseExpr(machine.replBuffer);
-
-		// Instruct machine to process the s-expressions
-		executeMachine();
+	if(!quiet_flag) {
+		printf("\n");
+		printf("********************\n");
+		printf("* LISP Interpreter *\n");
+		printf("********************\n\n");
 	}
+
+	machine = init_machine();
+
+	if(!quiet_flag) {
+		printf("Starting session...\n\n");
+	}
+	else {
+		printf("\n");
+	}
+
+	machine->prog = make_expression("(cons (quote a) (quote b))");
+	print_list(machine->prog);
+
+	// Begin execution of the machine
+	execute(machine);
+
+	destroy_machine(machine);
 }
 
-void storeToken(char *string) {
+void print_list(Cell *list) {
 
+	// Handles the case when it is only the empty list
+	if(list == machine->nil) {
+		printf("()\n");
+		return;
+	}
+
+	Cell * cell = list;
+	bool is_going_up = false;
+
+	Stack s;
+	MAKE_STACK(s, Cell *);
+	PUSH(s, Cell *, cell);
+	printf("(");
+
+	while(s.n != 0 || is_going_up) {
+		// If we have already traversed down, then we must go over one
+		if(is_going_up) {
+			// Go across the current list to the next element
+			if(cell->cdr != machine->nil) {
+				printf(" ");
+				cell = cell->cdr;
+				PUSH(s, Cell *, cell);
+				is_going_up = false;
+			}
+			// Print the end of a list
+			else {
+				printf(")");
+
+				if(s.n != 0) {
+					POP(s, Cell *, cell);
+				}
+				else {
+					is_going_up = false;
+				}
+			}
+		}
+		// Print the symbol if it exists
+		else if(cell->car->is_atom) {
+			char * symbol = get_symbol_name(cell->car);
+			printf("%s", symbol);
+			free(symbol);
+			POP(s, Cell *, cell);
+			is_going_up = true;
+		}
+		// Traverse down
+		else {
+			printf("(");
+			cell = cell->car;
+			PUSH(s, Cell *, cell);
+		}
+	}
+
+	printf("\n");
 }
 
-void setCell(Cell *target, int8_t cellType, Cell *car, Cell *cdr) {
-	setCellType(target, cellType);
-	target->car = car;
-	target->cdr = cdr;
-}
+void process_args(int argc, char * argv[]) {
 
-/*
- *  Functions for manipulating the Cells and their data.
- */
-void setTrashBit(Cell *cell, int8_t value) {
-	cell->metaData = cell->metaData | value;
-}
-uint8_t getTrashBit(Cell *cell) {
-	return cell->metaData & 0x01;
-}
-void setCellType(Cell *cell, int8_t type) {
-	cell->metaData = cell->metaData | (type << 1);
-}
-int8_t getCellType(Cell *cell) {
-	return (cell->metaData >> 1) & 0x07;
+	quiet_flag = false;
+
+	for(int i = 1; i < argc; ++i) {
+		if(strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0) {
+			quiet_flag = true;
+		}
+		else {
+			fprintf(stderr, "Unrecognized command line option '%s'.\n", argv[i]);
+			fprintf(stderr, "Exiting...\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 }

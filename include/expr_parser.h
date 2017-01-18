@@ -1,9 +1,23 @@
 #ifndef EXPR_PARSER_INCLUDED
 	#define EXPR_PARSER_INCLUDED
 
-	void parseExpr(char *string);
-	int nextToken(int startIndex);
-	int endOfToken(int startingIndex);
-	int findMatchingParens(int firstIndex);
+	#include "lisp_machine.h"
+
+	typedef struct tokenizer_t {
+		char * string;
+		int string_length;
+		int index;
+		int max_token_size;
+		char * token;
+	} Tokenizer;
+
+	Cell * make_expression(char *expr);
+	int index_of(char * string, char * targets);
+	Cell * make_symbol(char * name);
+	char * get_symbol_name(Cell * sym);
+
+	Tokenizer * make_tokenizer(char * string);
+	void destroy_tokenizer(Tokenizer * tk);
+	char * tokenizer_next(Tokenizer * tk);
 
 #endif
