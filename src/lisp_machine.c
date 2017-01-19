@@ -19,14 +19,10 @@ Lisp_Machine * init_machine() {
 	}
 
 	// Create and link the memory cells
-	machine->mem = calloc(sizeof(Cell) * NUM_OF_CELLS, sizeof(Cell));
+	machine->free_mem = calloc(sizeof(Cell) * NUM_OF_CELLS, sizeof(Cell));
 	for(int i = 0; i < NUM_OF_CELLS - 1; ++i) {
-		machine->mem[i].cdr = &machine->mem[i + 1];
+		machine->free_mem[i].cdr = &machine->free_mem[i + 1];
 	}
-
-	machine->prog = machine->mem;
-	machine->free_mem = machine->mem->cdr;
-	machine->prog->cdr = NULL;
 
 	machine->nil = malloc(sizeof(Cell));
 	machine->nil->car = NULL;
@@ -42,7 +38,7 @@ Lisp_Machine * init_machine() {
 
 void destroy_machine(Lisp_Machine *machine) {
 
-	free(machine->mem);
+	free(machine->free_mem);
 	free(machine);
 }
 
@@ -62,7 +58,7 @@ void store_cell(Cell * cell) {
 
 void execute(Lisp_Machine * lm) {
 
-	Cell * cell = lm->prog;
+	Cell * cell = lm->sys;
 
 	while(machine->is_running) {
 		switch(cell->type) {
@@ -73,12 +69,15 @@ void execute(Lisp_Machine * lm) {
 			case SYS_ATOM:
 			case SYS_EQ:
 			case SYS_QUOTE:
-			case SYS_HALT:
 			default:
 				break;
 		}
 	}
 }
+
+/*
+ * Machine specific LISP functions
+ */
 
 Cell * car(Cell * cell) {
 	return cell->car;
@@ -105,7 +104,7 @@ Cell * quote(Cell * cell) {
 Cell * atom(Cell * cell) {
 
 	if(cell->is_atom) {
-		return machine->mem;
+		return NULL;
 	}
 	else {
 		return machine->nil;
@@ -113,7 +112,7 @@ Cell * atom(Cell * cell) {
 }
 
 // Really only implements an if statement, not cond
-Cell * cond(Cell * pred, Cell * true_value, Cell * false_value) {
+Cell * if_cond(Cell * pred, Cell * true_value, Cell * false_value) {
 
 	if(pred == machine->nil) {
 		return false_value;
@@ -124,7 +123,7 @@ Cell * cond(Cell * pred, Cell * true_value, Cell * false_value) {
 Cell * eq(Cell * cell1, Cell * cell2) {
 
 	if(cell1 == machine->nil && cell2 == machine->nil) {
-		return machine->mem;
+		return NULL;
 	}
 	else if (cell1 != machine->nil && cell2 != machine->nil) {
 
@@ -151,7 +150,7 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 						cell2 = cdr(cell2);
 					}
 					else if(cdr(cell1) == NULL && cdr(cell2) == NULL) {
-						return machine->mem;
+						return NULL;
 					}
 					else {
 						return machine->nil;

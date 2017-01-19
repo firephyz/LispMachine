@@ -164,7 +164,7 @@ int index_of(char * string, char * targets) {
 Cell * make_symbol(char * name) {
 
 	// Init the cell type. This will be refined to it's final value as we process the string
-	int cell_type = SYS_CAR | SYS_CDR | SYS_CONS | SYS_EQ | SYS_COND | SYS_ATOM | SYS_QUOTE | SYS_HALT;
+	int cell_type = SYS_CAR | SYS_CDR | SYS_CONS | SYS_EQ | SYS_COND | SYS_ATOM | SYS_QUOTE;
 
 	Cell * result;
 	Cell * prev_cell;
@@ -224,9 +224,6 @@ void determine_cell_type(char * name, int index, int * cell_type) {
 			if(name[index] != 'a') {
 				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
 			}
-			if(name[index] != 'h') {
-				*cell_type = *cell_type & (-1 ^ SYS_HALT);
-			}
 			if(name[index] != 'q') {
 				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
 			}
@@ -243,7 +240,6 @@ void determine_cell_type(char * name, int index, int * cell_type) {
 				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
 			}
 			if(name[index] != 'a') {
-				*cell_type = *cell_type & (-1 ^ SYS_HALT);
 				*cell_type = *cell_type & (-1 ^ SYS_CAR);
 			}
 			if(name[index] != 'd') {
@@ -265,9 +261,6 @@ void determine_cell_type(char * name, int index, int * cell_type) {
 				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
 				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
 			}
-			if(name[index] != 'l') {
-				*cell_type = *cell_type & (-1 ^ SYS_HALT);
-			}
 			if(name[index] != 'r') {
 				*cell_type = *cell_type & (-1 ^ SYS_CAR);
 				*cell_type = *cell_type & (-1 ^ SYS_CDR);
@@ -284,7 +277,6 @@ void determine_cell_type(char * name, int index, int * cell_type) {
 				*cell_type = *cell_type & (-1 ^ SYS_COND);
 			}
 			if(name[index] != 't') {
-				*cell_type = *cell_type & (-1 ^ SYS_HALT);
 				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
 			}
 			break;
