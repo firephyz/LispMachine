@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Symbols</TITLE>
+<link href="r5rs_60.html" rel=Next>
+<link href="r5rs_58.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_58.html">previous</A>, <A HREF="r5rs_60.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC61" HREF="r5rs_toc.html#TOC61">6.3.3  Symbols</A></H3>
+
+<P>
+Symbols are objects whose usefulness rests on the fact that two symbols are
+identical (in the sense of eqv?) if and only if their names are spelled the
+same way.  This is exactly the property needed to represent identifiers in
+programs, and so most implementations of Scheme use them internally for that
+purpose.  Symbols are useful for many other applications; for instance, they
+may be used the way enumerated values are used in Pascal.
+
+</P>
+<P>
+The rules for writing a symbol are exactly the same as the rules for writing an
+identifier; see sections 2.1 and 7.1.1.
+
+</P>
+<P>
+It is guaranteed that any symbol that has been returned as part of a literal
+expression, or read using the read procedure, and subsequently written out
+using the write procedure, will read back in as the identical symbol (in the
+sense of eqv?).  The string-&#62;symbol procedure, however, can create symbols for
+which this write/read invariance may not hold because their names contain
+special characters or letters in the non-standard case.
+
+</P>
+<P>
+Note: Some implementations of Scheme have a feature known as "slashification"
+in order to guarantee write/read invariance for all symbols, but historically
+the most important use of this feature has been to compensate for the lack of a
+string data type.  Some implementations also have "uninterned symbols", which
+defeat write/read invariance even in implementations with slashification, and
+also generate exceptions to the rule that two symbols are the same if and only
+if their names are spelled the same.
+
+</P>
+
+<PRE>
+[[procedure]] (symbol? obj)
+</PRE>
+
+<P>
+Returns #t if obj is a symbol, otherwise returns #f.
+
+</P>
+
+<PRE>
+  (symbol? 'foo)          =>  #t
+  (symbol? (car '(a b)))  =>  #t
+  (symbol? "bar")         =>  #f
+  (symbol? 'nil)          =>  #t
+  (symbol? '())           =>  #f
+  (symbol? #f)            =>  #f
+</PRE>
+
+
+<PRE>
+[[procedure]] (symbol-&#62;string symbol)
+</PRE>
+
+<P>
+Returns the name of symbol as a string.  If the symbol was part of an object
+returned as the value of a literal expression (section 4.1.2) or by a call to
+the read procedure, and its name contains alphabetic characters, then the
+string returned will contain characters in the implementation's preferred
+standard case--some implementations will prefer upper case, others lower case.
+If the symbol was returned by string-&#62;symbol, the case of characters in the
+string returned will be the same as the case in the string that was passed to
+string-&#62;symbol.  It is an error to apply mutation procedures like string-set!
+to strings returned by this procedure.
+
+</P>
+<P>
+The following examples assume that the implementation's standard case is lower
+case:
+
+</P>
+
+<PRE>
+  (symbol-&#62;string 'flying-fish)
+                                    =>  "flying-fish"
+  (symbol-&#62;string 'Martin)          =>  "martin"
+  (symbol-&#62;string
+     (string-&#62;symbol "Malvina"))
+                                    =>  "Malvina"
+</PRE>
+
+
+<PRE>
+[[procedure]] (string-&#62;symbol string)
+</PRE>
+
+<P>
+Returns the symbol whose name is string.  This procedure can create symbols
+with names containing special characters or letters in the non-standard case,
+but it is usually a bad idea to create such symbols because in some
+implementations of Scheme they cannot be read as themselves.  See
+symbol-&#62;string.
+
+</P>
+<P>
+The following examples assume that the implementation's standard case is lower
+case:
+
+</P>
+
+<PRE>
+  (eq? 'mISSISSIppi 'mississippi)     =>  #t
+  (string-&#62;symbol "mISSISSIppi")      =>  the symbol with name "mISSISSIppi"
+  (eq? 'bitBlt (string-&#62;symbol "bitBlt"))
+                                      =>  #f
+  (eq? 'JollyWog
+       (string-&#62;symbol
+         (symbol-&#62;string 'JollyWog))) =>  #t
+  (string=? "K. Harper, M.D."
+            (symbol-&#62;string
+              (string-&#62;symbol "K. Harper, M.D.")))
+                                      =>  #t
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_58.html">previous</A>, <A HREF="r5rs_60.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

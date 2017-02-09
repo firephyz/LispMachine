@@ -27,7 +27,7 @@ BIN_DIR = $(DIR)/bin/
 INSTALL_BIN_DIR = /usr/local/bin/
 
 ################# Flags #######################
-CCFLAGS = -g -Wall -std=c99
+CCFLAGS = -g -g3 -Wall -std=c99
 LIB_FLAGS = $(subst :,-l$,$(REQUIRED_LIBRARIES))
 INCLUDE_FLAGS = -I$(INCLUDE_DIR) $(subst :,-I/usr/local/include/,$(REQUIRED_LIBRARIES))
 ALL_FLAGS =  -Wl,-rpath=/usr/local/lib $(CCFLAGS) $(LIB_FLAGS) $(INCLUDE_FLAGS)

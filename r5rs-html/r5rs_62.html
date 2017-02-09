@@ -1,0 +1,171 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Vectors</TITLE>
+<link href="r5rs_63.html" rel=Next>
+<link href="r5rs_61.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_61.html">previous</A>, <A HREF="r5rs_63.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC64" HREF="r5rs_toc.html#TOC64">6.3.6  Vectors</A></H3>
+
+<P>
+Vectors are heterogenous structures whose elements are indexed by integers.  A
+vector typically occupies less space than a list of the same length, and the
+average time required to access a randomly chosen element is typically less for
+the vector than for the list.
+
+</P>
+<P>
+The length of a vector is the number of elements that it contains.  This number
+is a non-negative integer that is fixed when the vector is created.  The valid
+indexes of a vector are the exact non-negative integers less than the length of
+the vector.  The first element in a vector is indexed by zero, and the last
+element is indexed by one less than the length of the vector.
+
+</P>
+<P>
+Vectors are written using the notation #(obj ...).  For example, a vector
+of length 3 containing the number zero in element 0, the list (2 2 2 2) in
+element 1, and the string "Anna" in element 2 can be written as following:
+
+</P>
+
+<PRE>
+  #(0 (2 2 2 2) "Anna")
+</PRE>
+
+<P>
+Note that this is the external representation of a vector, not an expression
+evaluating to a vector.  Like list constants, vector constants must be quoted:
+
+</P>
+
+<PRE>
+  '#(0 (2 2 2 2) "Anna")  =>  #(0 (2 2 2 2) "Anna")
+</PRE>
+
+
+<PRE>
+[[procedure]] (vector? obj)
+</PRE>
+
+<P>
+Returns #t if obj is a vector, otherwise returns #f.
+
+</P>
+
+<PRE>
+[[procedure]] (make-vector k)
+[[procedure]] (make-vector k fill)
+</PRE>
+
+<P>
+Returns a newly allocated vector of k elements.  If a second argument is given,
+then each element is initialized to fill.  Otherwise the initial contents of
+each element is unspecified.
+
+</P>
+
+<PRE>
+[[library procedure]] (vector obj ...)
+</PRE>
+
+<P>
+Returns a newly allocated vector whose elements contain the given arguments.
+Analogous to list.
+
+</P>
+
+<PRE>
+  (vector 'a 'b 'c)               =>  #(a b c)
+</PRE>
+
+
+<PRE>
+[[procedure]] (vector-length vector)
+</PRE>
+
+<P>
+Returns the number of elements in vector as an exact integer.
+
+</P>
+
+<PRE>
+[[procedure]] (vector-ref vector k)
+</PRE>
+
+<P>
+k must be a valid index of vector.  Vector-ref returns the contents of element
+k of vector.
+
+</P>
+
+<PRE>
+  (vector-ref '#(1 1 2 3 5 8 13 21)
+              5)         =>  8
+  (vector-ref '#(1 1 2 3 5 8 13 21)
+              (let ((i (round (* 2 (acos -1)))))
+                (if (inexact? i)
+                    (inexact-&#62;exact i)
+                    i))) => 13
+</PRE>
+
+
+<PRE>
+[[procedure]] (vector-set! vector k obj)
+</PRE>
+
+<P>
+k must be a valid index of vector.  Vector-set! stores obj in element k of
+vector.  The value returned by vector-set! is unspecified.
+
+</P>
+
+<PRE>
+  (let ((vec (vector 0 '(2 2 2 2) "Anna")))
+    (vector-set! vec 1 '("Sue" "Sue"))
+    vec)      =>  #(0 ("Sue" "Sue") "Anna")
+
+  (vector-set! '#(0 1 2) 1 "doe")  =>  error  ; constant vector
+</PRE>
+
+
+<PRE>
+[[library procedure]] (vector-&#62;list vector)
+[[library procedure]] (list-&#62;vector list)
+</PRE>
+
+<P>
+Vector-&#62;list returns a newly allocated list of the objects contained in the
+elements of vector.  List-&#62;vector returns a newly created vector initialized to
+the elements of the list list.
+
+</P>
+
+<PRE>
+  (vector-&#62;list '#(dah dah didah))  =>  (dah dah didah)
+  (list-&#62;vector '(dididit dah))     =>  #(dididit dah)
+</PRE>
+
+
+<PRE>
+[[library procedure]] (vector-fill! vector fill)
+</PRE>
+
+<P>
+Stores fill in every element of vector.  The value returned by vector-fill! is
+unspecified.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_61.html">previous</A>, <A HREF="r5rs_63.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

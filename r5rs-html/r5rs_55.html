@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Numerical input and output</TITLE>
+<link href="r5rs_56.html" rel=Next>
+<link href="r5rs_54.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_54.html">previous</A>, <A HREF="r5rs_56.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC57" HREF="r5rs_toc.html#TOC57">6.2.6  Numerical input and output</A></H3>
+
+
+<PRE>
+[[procedure]] (number-&#62;string z)
+[[procedure]] (number-&#62;string z radix)
+</PRE>
+
+<P>
+Radix must be an exact integer, either 2, 8, 10, or 16.  If omitted, radix
+defaults to 10.  The procedure number-&#62;string takes a number and a radix and
+returns as a string an external representation of the given number in the given
+radix such that
+
+</P>
+
+<PRE>
+  (let ((number number)
+        (radix radix))
+    (eqv? number
+          (string-&#62;number (number-&#62;string number
+                                          radix)
+                          radix)))
+</PRE>
+
+<P>
+is true.  It is an error if no possible result makes this expression true.
+
+</P>
+<P>
+If z is inexact, the radix is 10, and the above expression can be satisfied by
+a result that contains a decimal point, then the result contains a decimal
+point and is expressed using the minimum number of digits (exclusive of
+exponent and trailing zeroes) needed to make the above expression true [3, 5];
+otherwise the format of the result is unspecified.
+
+</P>
+<P>
+The result returned by number-&#62;string never contains an explicit radix prefix.
+
+</P>
+<P>
+Note: The error case can occur only when z is not a complex number or is a
+complex number with a non-rational real or imaginary part.
+
+</P>
+<P>
+Rationale: If z is an inexact number represented using flonums, and the radix
+is 10, then the above expression is normally satisfied by a result containing a
+decimal point.  The unspecified case allows for infinities, NaNs, and
+non-flonum representations.
+
+</P>
+
+<PRE>
+[[procedure]] (string-&#62;number string)
+[[procedure]] (string-&#62;number string radix)
+</PRE>
+
+<P>
+Returns a number of the maximally precise representation expressed by the given
+string.  Radix must be an exact integer, either 2, 8, 10, or 16.  If supplied,
+radix is a default radix that may be overridden by an explicit radix prefix in
+string (e.g. "#o177").  If radix is not supplied, then the default radix is 10.
+If string is not a syntactically valid notation for a number, then
+string-&#62;number returns #f.
+
+</P>
+
+<PRE>
+  (string-&#62;number "100")        =>  100
+  (string-&#62;number "100" 16)     =>  256
+  (string-&#62;number "1e2")        =>  100.0
+  (string-&#62;number "15##")       =>  1500.0
+</PRE>
+
+<P>
+Note: The domain of string-&#62;number may be restricted by implementations in the
+following ways.  String-&#62;number is permitted to return #f whenever string
+contains an explicit radix prefix.  If all numbers supported by an
+implementation are real, then string-&#62;number is permitted to return #f whenever
+string uses the polar or rectangular notations for complex numbers.  If all
+numbers are integers, then string-&#62;number may return #f whenever the fractional
+notation is used.  If all numbers are exact, then string-&#62;number may return #f
+whenever an exponent marker or explicit exactness prefix is used, or if a #
+appears in place of a digit.  If all inexact numbers are integers, then
+string-&#62;number may return #f whenever a decimal point is used.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_54.html">previous</A>, <A HREF="r5rs_56.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

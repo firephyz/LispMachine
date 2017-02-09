@@ -39,9 +39,6 @@ int main(int argc, char * argv[]) {
 		printf("\n");
 	}
 
-	machine->prog = make_expression("(cons (quote a) (quote b))");
-	print_list(machine->prog);
-
 	// Begin execution of the machine
 	execute(machine);
 

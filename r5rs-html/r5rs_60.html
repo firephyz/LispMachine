@@ -1,0 +1,194 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Characters</TITLE>
+<link href="r5rs_61.html" rel=Next>
+<link href="r5rs_59.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_59.html">previous</A>, <A HREF="r5rs_61.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC62" HREF="r5rs_toc.html#TOC62">6.3.4  Characters</A></H3>
+
+<P>
+Characters are objects that represent printed characters such as letters and
+digits.  Characters are written using the notation #\&#60;character&#62; or
+#\&#60;character name&#62;.  For example:
+
+</P>
+
+<PRE>
+  #\a       ; lower case letter
+  #\A       ; upper case letter
+  #\(       ; left parenthesis
+  #\        ; the space character
+  #\space   ; the preferred way to write a space
+  #\newline ; the newline character
+</PRE>
+
+<P>
+Case is significant in #\&#60;character&#62;, but not in #\&#60;character name&#62;.  If
+&#60;character&#62; in #\&#60;character&#62; is alphabetic, then the character following
+&#60;character&#62; must be a delimiter character such as a space or parenthesis.  This
+rule resolves the ambiguous case where, for example, the sequence of characters
+"#\space" could be taken to be either a representation of the space character
+or a representation of the character "#\s" followed by a representation of the
+symbol "pace."
+
+</P>
+<P>
+Characters written in the #\ notation are self-evaluating.  That is, they do
+not have to be quoted in programs.
+
+</P>
+<P>
+Some of the procedures that operate on characters ignore the difference between
+upper case and lower case.  The procedures that ignore case have "-ci" (for
+"case insensitive") embedded in their names.
+
+</P>
+
+<PRE>
+[[procedure]] (char? obj)
+</PRE>
+
+<P>
+Returns #t if obj is a character, otherwise returns #f.
+
+</P>
+
+<PRE>
+[[procedure]] (char=? char1 char2)
+[[procedure]] (char&#60;? char1 char2)
+[[procedure]] (char&#62;? char1 char2)
+[[procedure]] (char&#60;=? char1 char2)
+[[procedure]] (char&#62;=? char1 char2)
+</PRE>
+
+<P>
+These procedures impose a total ordering on the set of characters.  It is
+guaranteed that under this ordering:
+
+</P>
+
+<UL>
+
+<LI>
+
+The upper case characters are in order.  For example, (char&#60;? #\A #\B) returns
+#t.
+
+<LI>
+
+The lower case characters are in order.  For example, (char&#60;? #\a #\b) returns
+#t.
+
+<LI>
+
+The digits are in order.  For example, (char&#60;? #\0 #\9) returns #t.
+
+<LI>
+
+Either all the digits precede all the upper case letters, or vice versa.
+
+<LI>
+
+Either all the digits precede all the lower case letters, or vice versa.
+
+</UL>
+
+<P>
+Some implementations may generalize these procedures to take more than two
+arguments, as with the corresponding numerical predicates.
+
+</P>
+
+<PRE>
+[[library procedure]] (char-ci=? char1 char2)
+[[library procedure]] (char-ci&#60;? char1 char2)
+[[library procedure]] (char-ci&#62;? char1 char2)
+[[library procedure]] (char-ci&#60;=? char1 char2)
+[[library procedure]] (char-ci&#62;=? char1 char2)
+</PRE>
+
+<P>
+These procedures are similar to char=? et cetera, but they treat upper case and
+lower case letters as the same.  For example, (char-ci=? #\A #\a) returns #t.
+Some implementations may generalize these procedures to take more than two
+arguments, as with the corresponding numerical predicates.
+
+</P>
+
+<PRE>
+[[library procedure]] (char-alphabetic? char)
+[[library procedure]] (char-numeric? char)
+[[library procedure]] (char-whitespace? char)
+[[library procedure]] (char-upper-case? letter)
+[[library procedure]] (char-lower-case? letter)
+</PRE>
+
+<P>
+These procedures return #t if their arguments are alphabetic, numeric,
+whitespace, upper case, or lower case characters, respectively, otherwise they
+return #f.  The following remarks, which are specific to the ASCII character
+set, are intended only as a guide: The alphabetic characters are the 52 upper
+and lower case letters.  The numeric characters are the ten decimal digits.
+The whitespace characters are space, tab, line feed, form feed, and carriage
+return.
+
+</P>
+
+<PRE>
+[[procedure]] (char-&#62;integer char)
+[[procedure]] (integer-&#62;char n)
+</PRE>
+
+<P>
+Given a character, char-&#62;integer returns an exact integer representation of the
+character.  Given an exact integer that is the image of a character under
+char-&#62;integer, integer-&#62;char returns that character.  These procedures
+implement order-preserving isomorphisms between the set of characters under the
+char&#60;=? ordering and some subset of the integers under the &#60;= ordering.  That
+is, if
+
+</P>
+
+<PRE>
+  (char&#60;=? a b) => #t  and  (&#60;= x y) => #t
+</PRE>
+
+<P>
+and x and y are in the domain of integer-&#62;char, then
+
+</P>
+
+<PRE>
+  (&#60;= (char-&#62;integer a)
+      (char-&#62;integer b))         =>  #t
+
+  (char&#60;=? (integer-&#62;char x)
+           (integer-&#62;char y))     =>  #t
+</PRE>
+
+
+<PRE>
+[[library procedure]] (char-upcase char)
+[[library procedure]] (char-downcase char)
+</PRE>
+
+<P>
+These procedures return a character char2 such that (char-ci=? char char2).  In
+addition, if char is alphabetic, then the result of char-upcase is upper case
+and the result of char-downcase is lower case.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_59.html">previous</A>, <A HREF="r5rs_61.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

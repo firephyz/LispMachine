@@ -13,8 +13,9 @@
 	#define SYS_CONS 	0x04
 	#define SYS_EQ 		0x08
 	#define SYS_ATOM 	0x10
-	#define SYS_QUOTE 	0x11
-	#define SYS_COND 	0x12
+	#define SYS_QUOTE 	0x20
+	#define SYS_COND 	0x40
+	#define SYS_LAMBDA 	0x80
 
 	extern int chars_per_pointer;
 
@@ -31,10 +32,18 @@
 
 	struct lisp_machine_t {
 		bool is_running;
+		int mem_used;
+		int mem_free;
 		Cell * free_mem;
-		Cell * prog;
-		Cell * sys;
 		Cell * nil;
+		Cell * eval_func;
+		Cell * apply_func;
+		Cell * evlis_func;
+		Cell * evif_func;
+		Cell * conenv_func;
+		Cell * lookup_func;
+
+		Cell * sys_env;
 	};
 
 	Lisp_Machine * init_machine();

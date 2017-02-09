@@ -1,0 +1,164 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Binding constructs</TITLE>
+<link href="r5rs_34.html" rel=Next>
+<link href="r5rs_32.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_32.html">previous</A>, <A HREF="r5rs_34.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC35" HREF="r5rs_toc.html#TOC35">4.2.2  Binding constructs</A></H3>
+
+<P>
+The three binding constructs let, let*, and letrec give Scheme a block
+structure, like Algol 60.  The syntax of the three constructs is identical, but
+they differ in the regions they establish for their variable bindings.  In a
+let expression, the initial values are computed before any of the variables
+become bound; in a let* expression, the bindings and evaluations are performed
+sequentially; while in a letrec expression, all the bindings are in effect
+while their initial values are being computed, thus allowing mutually recursive
+definitions.
+
+</P>
+
+<PRE>
+[[library syntax]] (let &#60;bindings&#62; &#60;body&#62;)
+</PRE>
+
+<P>
+Syntax: &#60;Bindings&#62; should have the form
+
+</P>
+
+<PRE>
+    ((&#60;variable1&#62; &#60;init1&#62;) ...)
+</PRE>
+
+<P>
+where each &#60;init&#62; is an expression, and &#60;body&#62; should be a sequence of one or
+more expressions.  It is an error for a &#60;variable&#62; to appear more than once in
+the list of variables being bound.
+
+</P>
+<P>
+Semantics: The &#60;init&#62;s are evaluated in the current environment (in some
+unspecified order), the &#60;variable&#62;s are bound to fresh locations holding the
+results, the &#60;body&#62; is evaluated in the extended environment, and the value(s)
+of the last expression of &#60;body&#62; is(are) returned.  Each binding of a
+&#60;variable&#62; has &#60;body&#62; as its region.
+
+</P>
+
+<PRE>
+  (let ((x 2) (y 3))
+    (* x y))                      =>  6
+
+  (let ((x 2) (y 3))
+    (let ((x 7)
+          (z (+ x y)))
+      (* z x)))                   =>  35
+</PRE>
+
+<P>
+See also named let, section 4.2.4.
+
+</P>
+
+<PRE>
+[[library syntax]] (let* &#60;bindings&#62; &#60;body&#62;)
+</PRE>
+
+<P>
+Syntax: &#60;Bindings&#62; should have the form
+
+</P>
+
+<PRE>
+    ((&#60;variable1&#62; &#60;init1&#62;) ...),
+</PRE>
+
+<P>
+and &#60;body&#62; should be a sequence of one or more expressions.
+
+</P>
+<P>
+Semantics: Let* is similar to let, but the bindings are performed sequentially
+from left to right, and the region of a binding indicated by (&#60;variable&#62;
+&#60;init&#62;) is that part of the let* expression to the right of the binding.  Thus
+the second binding is done in an environment in which the first binding is
+visible, and so on.
+
+</P>
+
+<PRE>
+  (let ((x 2) (y 3))
+    (let* ((x 7)
+           (z (+ x y)))
+      (* z x)))             =>  70
+</PRE>
+
+
+<PRE>
+[[library syntax]] (letrec &#60;bindings&#62; &#60;body&#62;)
+</PRE>
+
+<P>
+Syntax: &#60;Bindings&#62; should have the form
+
+</P>
+
+<PRE>
+    ((&#60;variable1&#62; &#60;init1&#62;) ...),
+</PRE>
+
+<P>
+and &#60;body&#62; should be a sequence of one or more expressions. It is an error for
+a &#60;variable&#62; to appear more than once in the list of variables being bound.
+
+</P>
+<P>
+Semantics: The &#60;variable&#62;s are bound to fresh locations holding undefined
+values, the &#60;init&#62;s are evaluated in the resulting environment (in some
+unspecified order), each &#60;variable&#62; is assigned to the result of the
+corresponding &#60;init&#62;, the &#60;body&#62; is evaluated in the resulting environment, and
+the value(s) of the last expression in &#60;body&#62; is(are) returned.  Each binding
+of a &#60;variable&#62; has the entire letrec expression as its region, making it
+possible to define mutually recursive procedures.
+
+</P>
+
+<PRE>
+  (letrec ((even?
+            (lambda (n)
+              (if (zero? n)
+                  #t
+                  (odd? (- n 1)))))
+           (odd?
+            (lambda (n)
+              (if (zero? n)
+                  #f
+                  (even? (- n 1))))))
+    (even? 88))
+                  =>  #t
+</PRE>
+
+<P>
+One restriction on letrec is very important: it must be possible to evaluate
+each &#60;init&#62; without assigning or referring to the value of any &#60;variable&#62;.  If
+this restriction is violated, then it is an error.  The restriction is
+necessary because Scheme passes arguments by value rather than by name.  In the
+most common uses of letrec, all the &#60;init&#62;s are lambda expressions and the
+restriction is satisfied automatically.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_32.html">previous</A>, <A HREF="r5rs_34.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

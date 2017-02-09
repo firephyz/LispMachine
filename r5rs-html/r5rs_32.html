@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Conditionals (derived)</TITLE>
+<link href="r5rs_33.html" rel=Next>
+<link href="r5rs_31.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_31.html">previous</A>, <A HREF="r5rs_33.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC34" HREF="r5rs_toc.html#TOC34">4.2.1  Conditionals</A></H3>
+
+
+<PRE>
+[[library syntax]] (cond &#60;clause1&#62; &#60;clause2&#62; ...)
+</PRE>
+
+<P>
+Syntax: Each &#60;clause&#62; should be of the form
+
+</P>
+
+<PRE>
+    (&#60;test&#62; &#60;expression1&#62; ...)
+</PRE>
+
+<P>
+where &#60;test&#62; is any expression.  Alternatively, a &#60;clause&#62; may be of the form
+
+</P>
+
+<PRE>
+    (&#60;test&#62; =&#62; &#60;expression&#62;)
+</PRE>
+
+<P>
+The last &#60;clause&#62; may be an "else clause," which has the form
+
+</P>
+
+<PRE>
+    (else &#60;expression1&#62; &#60;expression2&#62; ...).
+</PRE>
+
+<P>
+Semantics: A cond expression is evaluated by evaluating the &#60;test&#62; expressions
+of successive &#60;clause&#62;s in order until one of them evaluates to a true value
+(see section 6.3.1).  When a &#60;test&#62; evaluates to a true value, then the
+remaining &#60;expression&#62;s in its &#60;clause&#62; are evaluated in order, and the
+result(s) of the last &#60;expression&#62; in the &#60;clause&#62; is(are) returned as the
+result(s) of the entire cond expression.  If the selected &#60;clause&#62; contains
+only the &#60;test&#62; and no &#60;expression&#62;s, then the value of the &#60;test&#62; is returned
+as the result.  If the selected &#60;clause&#62; uses the =&#62; alternate form, then the
+&#60;expression&#62; is evaluated.  Its value must be a procedure that accepts one
+argument; this procedure is then called on the value of the &#60;test&#62; and the
+value(s) returned by this procedure is(are) returned by the cond expression.
+If all &#60;test&#62;s evaluate to false values, and there is no else clause, then the
+result of the conditional expression is unspecified; if there is an else
+clause, then its &#60;expression&#62;s are evaluated, and the value(s) of the last one
+is(are) returned.
+
+</P>
+
+<PRE>
+  (cond ((&#62; 3 2) 'greater)
+        ((&#60; 3 2) 'less))                    =>  greater
+
+  (cond ((&#62; 3 3) 'greater)
+        ((&#60; 3 3) 'less)
+        (else 'equal))                      =>  equal
+
+  (cond ((assv 'b '((a 1) (b 2))) =&#62; cadr)
+        (else #f))                          =>  2
+</PRE>
+
+
+<PRE>
+[[library syntax]] (case &#60;key&#62; &#60;clause1&#62; &#60;clause2&#62; ...)
+</PRE>
+
+<P>
+Syntax: &#60;Key&#62; may be any expression.  Each &#60;clause&#62; should have the form
+
+</P>
+
+<PRE>
+    ((&#60;datum1&#62; ...) &#60;expression1&#62; &#60;expression2&#62; ...),
+</PRE>
+
+<P>
+where each &#60;datum&#62; is an external representation of some object.  All the
+&#60;datum&#62;s must be distinct.  The last &#60;clause&#62; may be an "else clause," which
+has the form
+
+</P>
+
+<PRE>
+    (else &#60;expression1&#62; &#60;expression2&#62; ...).
+</PRE>
+
+<P>
+Semantics: A case expression is evaluated as follows.  &#60;Key&#62; is evaluated and
+its result is compared against each &#60;datum&#62;.  If the result of evaluating &#60;key&#62;
+is equivalent (in the sense of eqv?; see section 6.1) to a &#60;datum&#62;, then the
+expressions in the corresponding &#60;clause&#62; are evaluated from left to right and
+the result(s) of the last expression in the &#60;clause&#62; is(are) returned as the
+result(s) of the case expression.  If the result of evaluating &#60;key&#62; is
+different from every &#60;datum&#62;, then if there is an else clause its expressions
+are evaluated and the result(s) of the last is(are) the result(s) of the case
+expression; otherwise the result of the case expression is unspecified.
+
+</P>
+
+<PRE>
+  (case (* 2 3)
+    ((2 3 5 7) 'prime)
+    ((1 4 6 8 9) 'composite))     =>  composite
+  (case (car '(c d))
+    ((a) 'a)
+    ((b) 'b))                     =>  unspecified
+  (case (car '(c d))
+    ((a e i o u) 'vowel)
+    ((w y) 'semivowel)
+    (else 'consonant))            =>  consonant
+</PRE>
+
+
+<PRE>
+[[library syntax]] (and &#60;test1&#62; ...)
+</PRE>
+
+<P>
+The &#60;test&#62; expressions are evaluated from left to right, and the value of the
+first expression that evaluates to a false value (see section 6.3.1) is
+returned.  Any remaining expressions are not evaluated.  If all the expressions
+evaluate to true values, the value of the last expression is returned.  If
+there are no expressions then #t is returned.
+
+</P>
+
+<PRE>
+  (and (= 2 2) (&#62; 2 1))           =>  #t
+  (and (= 2 2) (&#60; 2 1))           =>  #f
+  (and 1 2 'c '(f g))             =>  (f g)
+  (and)                           =>  #t
+</PRE>
+
+
+<PRE>
+[[library syntax]] (or &#60;test1&#62; ...)
+</PRE>
+
+<P>
+The &#60;test&#62; expressions are evaluated from left to right, and the value of the
+first expression that evaluates to a true value (see section 6.3.1) is
+returned.  Any remaining expressions are not evaluated.  If all expressions
+evaluate to false values, the value of the last expression is returned.  If
+there are no expressions then #f is returned.
+
+</P>
+
+<PRE>
+  (or (= 2 2) (&#62; 2 1))            =>  #t
+  (or (= 2 2) (&#60; 2 1))            =>  #t
+  (or #f #f #f) =>  #f
+  (or (memq 'b '(a b c))
+      (/ 3 0))                    =>  (b c)
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_31.html">previous</A>, <A HREF="r5rs_33.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

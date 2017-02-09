@@ -1,4 +1,5 @@
 #include "lisp_machine.h"
+#include "expr_parser.h"
 #include "repl.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +12,10 @@ Lisp_Machine * machine;
 
 Lisp_Machine * init_machine() {
 
-	Lisp_Machine * machine = malloc(sizeof(Lisp_Machine));
+	machine = malloc(sizeof(Lisp_Machine));
 	machine->is_running = true;
+	machine->mem_used = 0;
+	machine->mem_free = NUM_OF_CELLS;
 
 	if(verbose_flag) {
 		printf("Initializing machine...\n");
@@ -24,10 +27,63 @@ Lisp_Machine * init_machine() {
 		machine->free_mem[i].cdr = &machine->free_mem[i + 1];
 	}
 
+	// Setup the nil atom
 	machine->nil = malloc(sizeof(Cell));
 	machine->nil->car = NULL;
 	machine->nil->cdr = NULL;
 	machine->nil->is_atom = true;
+
+	// Setup the evaluator code
+	machine->eval_func = make_expression("							\
+		(if (atom? expr)											\
+            (lookup expr env)										\
+            (if (eq? (car expr) (quote if))							\
+                (evif (car (cdr expr))								\
+                      (car (cdr (cdr expr)))						\
+                      (car (cdr (cdr (cdr expr))))					\
+                      env)											\
+                (if (eq? (car expr) (quote quote))					\
+                    (car (cdr expr))								\
+                    (if (eq? (car expr) (quote lambda))				\
+                        expr 										\
+                        (apply (car expr)							\
+                               (evlis (cdr expr) env)				\
+                               env)))))");
+	machine->apply_func = make_expression("							\
+		(if (atom? func)											\
+            (if (eq? func (quote car))								\
+                (car (car args))									\
+                (if (eq? func (quote cdr))							\
+                    (cdr (car args))								\
+                    (if (eq? func (quote cons))						\
+                        (cons (car args) (car (cdr args)))			\
+                        (if (eq? func (quote eq?))					\
+                            (eq? (car args) (car (cdr args)))		\
+                            (if (eq? func (quote atom?))			\
+                                (atom? (car args))					\
+                                (apply (eval func env)				\
+                                       args 						\
+                                       env))))))					\
+            (eval (car (cdr (cdr func)))							\
+                  (conenv (car (cdr func)) args env)))");
+	machine->evlis_func = make_expression("							\
+		(if (eq? args (quote ()))									\
+            (quote ())												\
+            (cons (eval (car args) env)								\
+                  (evlis (cdr args) env)))");
+	machine->evif_func = make_expression("							\
+		(if (eval pred env)											\
+            (eval then env)											\
+            (eval else env))");
+	machine->conenv_func = make_expression("						\
+		(if (eq? vars (quote ()))									\
+            env														\
+            (cons (cons (car vars) (car args))						\
+                  (conenv (cdr vars) (cdr args) env)))");
+	machine->lookup_func = make_expression("						\
+		(if (eq? (car (car env)) var)								\
+            (cdr (car env))											\
+            (lookup var (cdr env)))");
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -44,6 +100,9 @@ void destroy_machine(Lisp_Machine *machine) {
 
 Cell * get_free_cell() {
 
+	++machine->mem_used;
+	--machine->mem_free;
+
 	Cell * new_cell = machine->free_mem;
 	machine->free_mem = cdr(machine->free_mem);
 	new_cell->cdr = NULL;
@@ -58,7 +117,7 @@ void store_cell(Cell * cell) {
 
 void execute(Lisp_Machine * lm) {
 
-	Cell * cell = lm->sys;
+	Cell * cell = lm->nil;
 
 	while(machine->is_running) {
 		switch(cell->type) {
@@ -69,6 +128,7 @@ void execute(Lisp_Machine * lm) {
 			case SYS_ATOM:
 			case SYS_EQ:
 			case SYS_QUOTE:
+			case SYS_LAMBDA:
 			default:
 				break;
 		}

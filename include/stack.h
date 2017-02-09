@@ -25,12 +25,13 @@
 		memcpy(new_data, stack.data, sizeof(type) * stack.n);		\
 		free(stack.data);											\
 		stack.data = new_data;										\
+		stack.cap = 2 * stack.cap;									\
 	} while(0)
 
 	// Push a given variable of a given type onto the stack
 	#define PUSH(stack, type, var_name)														\
 	do {																					\
-		if(stack.n + 1== stack.cap) {														\
+		if(stack.n == stack.cap) {														\
 			RESIZE(stack, type);															\
 		}																					\
 																							\

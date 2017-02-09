@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Macros</TITLE>
+<link href="r5rs_39.html" rel=Next>
+<link href="r5rs_37.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_37.html">previous</A>, <A HREF="r5rs_39.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H2><A NAME="SEC40" HREF="r5rs_toc.html#TOC40">4.3  Macros</A></H2>
+
+<P>
+Scheme programs can define and use new derived expression types, called macros.
+Program-defined expression types have the syntax
+
+</P>
+
+<PRE>
+  (&#60;keyword&#62; &#60;datum&#62; ...)
+</PRE>
+
+<P>
+where &#60;keyword&#62; is an identifier that uniquely determines the expression type.
+This identifier is called the syntactic keyword, or simply keyword, of the
+macro.  The number of the &#60;datum&#62;s, and their syntax, depends on the expression
+type.
+
+</P>
+<P>
+Each instance of a macro is called a use of the macro.  The set of rules that
+specifies how a use of a macro is transcribed into a more primitive expression
+is called the transformer of the macro.
+
+</P>
+<P>
+The macro definition facility consists of two parts:
+
+</P>
+
+<UL>
+
+<LI>
+
+A set of expressions used to establish that certain identifiers are macro
+keywords, associate them with macro transformers, and control the scope within
+which a macro is defined, and
+
+<LI>
+
+a pattern language for specifying macro transformers.
+
+</UL>
+
+<P>
+The syntactic keyword of a macro may shadow variable bindings, and local
+variable bindings may shadow keyword bindings.  All macros defined using the
+pattern language are "hygienic" and "referentially transparent" and thus
+preserve Scheme's lexical scoping [14, 15, 2, 7, 9]:
+
+</P>
+
+<UL>
+
+<LI>
+
+If a macro transformer inserts a binding for an identifier (variable or
+keyword), the identifier will in effect be renamed throughout its scope to
+avoid conflicts with other identifiers.  Note that a define at top level may or
+may not introduce a binding; see section 5.2.
+
+<LI>
+
+If a macro transformer inserts a free reference to an identifier, the reference
+refers to the binding that was visible where the transformer was specified,
+regardless of any local bindings that may surround the use of the macro.
+
+</UL>
+
+
+<UL>
+<LI><A HREF="r5rs_39.html#SEC41">Binding constructs for syntactic keywords</A>
+<LI><A HREF="r5rs_40.html#SEC42">Pattern language</A>
+</UL>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_37.html">previous</A>, <A HREF="r5rs_39.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

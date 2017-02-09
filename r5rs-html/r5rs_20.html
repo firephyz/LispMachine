@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - External representations</TITLE>
+<link href="r5rs_21.html" rel=Next>
+<link href="r5rs_19.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_19.html">previous</A>, <A HREF="r5rs_21.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H2><A NAME="SEC22" HREF="r5rs_toc.html#TOC22">3.3  External representations</A></H2>
+
+<P>
+An important concept in Scheme (and Lisp) is that of the external
+representation of an object as a sequence of characters.  For example, an
+external representation of the integer 28 is the sequence of characters "28",
+and an external representation of a list consisting of the integers 8 and 13 is
+the sequence of characters "(8 13)".
+
+</P>
+<P>
+The external representation of an object is not necessarily unique.  The
+integer 28 also has representations "#e28.000" and "#x1c", and the list in the
+previous paragraph also has the representations "( 08 13 )" and "(8 . (13
+. ()))" (see section 6.3.2).
+
+</P>
+<P>
+Many objects have standard external representations, but some, such as
+procedures, do not have standard representations (although particular
+implementations may define representations for them).
+
+</P>
+<P>
+An external representation may be written in a program to obtain the
+corresponding object (see quote, section 4.1.2).
+
+</P>
+<P>
+External representations can also be used for input and output.  The procedure
+read (section 6.6.2) parses external representations, and the procedure write
+(section 6.6.3) generates them.  Together, they provide an elegant and powerful
+input/output facility.
+
+</P>
+<P>
+Note that the sequence of characters "(+ 2 6)" is not an external
+representation of the integer 8, even though it is an expression evaluating to
+the integer 8; rather, it is an external representation of a three-element
+list, the elements of which are the symbol + and the integers 2 and 6.
+Scheme's syntax has the property that any sequence of characters that is an
+expression is also the external representation of some object.  This can lead
+to confusion, since it may not be obvious out of context whether a given
+sequence of characters is intended to denote data or program, but it is also a
+source of power, since it facilitates writing programs such as interpreters and
+compilers that treat programs as data (or vice versa).
+
+</P>
+<P>
+The syntax of external representations of various kinds of objects accompanies
+the description of the primitives for manipulating the objects in the
+appropriate sections of chapter 6.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_19.html">previous</A>, <A HREF="r5rs_21.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

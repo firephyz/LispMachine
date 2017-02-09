@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Literal expressions</TITLE>
+<link href="r5rs_27.html" rel=Next>
+<link href="r5rs_25.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_25.html">previous</A>, <A HREF="r5rs_27.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC28" HREF="r5rs_toc.html#TOC28">4.1.2  Literal expressions</A></H3>
+
+
+<PRE>
+[[syntax]] (quote &#60;datum&#62;)
+[[syntax]] '&#60;datum&#62;
+[[syntax]] &#60;constant&#62;
+</PRE>
+
+<P>
+(quote &#60;datum&#62;) evaluates to &#60;datum&#62;.  &#60;Datum&#62; may be any external
+representation of a Scheme object (see section 3.3).  This notation is used to
+include literal constants in Scheme code.
+
+</P>
+
+<PRE>
+  (quote a)                     =>  a
+  (quote #(a b c))              =>  #(a b c)
+  (quote (+ 1 2))               =>  (+ 1 2)
+</PRE>
+
+<P>
+(quote &#60;datum&#62;) may be abbreviated as '&#60;datum&#62;.  The two notations are
+equivalent in all respects.
+
+</P>
+
+<PRE>
+  'a                   =>  a
+  '#(a b c)            =>  #(a b c)
+  '()                  =>  ()
+  '(+ 1 2)             =>  (+ 1 2)
+  '(quote a)           =>  (quote a)
+  "a                  =>  (quote a)
+</PRE>
+
+<P>
+Numerical constants, string constants, character constants, and boolean
+constants evaluate "to themselves"; they need not be quoted.
+
+</P>
+
+<PRE>
+  '"abc"     =>  "abc"
+  "abc"      =>  "abc"
+  '145932    =>  145932
+  145932     =>  145932
+  '#t        =>  #t
+  #t         =>  #t
+</PRE>
+
+<P>
+As noted in section 3.4, it is an error to alter a constant (i.e. the value of
+a literal expression) using a mutation procedure like set-car! or string-set!.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_25.html">previous</A>, <A HREF="r5rs_27.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

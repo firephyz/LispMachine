@@ -10,60 +10,21 @@ void determine_cell_type(char * name, int index, int * cell_type);
 
 Cell * make_expression(char *expr) {
 
-	if(expr[0] != '(') return NULL;
-	// Handles the case when only the empty list is given
-	else if (expr[0] == '(' && expr[1] == ')') {
-		return machine->nil;
-	}
-	else {
-		Stack s;
-		MAKE_STACK(s, Cell *);
+	Stack s;
+	MAKE_STACK(s, Cell *);
 
-		Cell * root = get_free_cell();
-		Cell * cell = root;
-		PUSH(s, Cell *, cell);
+	Cell root = {NULL, '\0', NULL, false, 0};
+	Cell * cell = &root;
 
-		Tokenizer * tk = make_tokenizer(expr + 1);
-		char * token = tokenizer_next(tk);
-		while(token != NULL) {
-			switch(token[0]) {
-				case '(':
-					// Handles the NIL symbol. (Annoying reuses almost all the code in the default case. Must fix)
-					if(token[1] == ')') {
-						if(cell->car == NULL) {
-							cell->car = machine->nil;
-							token = tokenizer_next(tk);
-						}
-						else {
-							POP(s, Cell *, cell);
-							cell->cdr = get_free_cell();
-							PUSH(s, Cell *, cell->cdr);
-							cell = cell->cdr;
-						}
-					}
-					// Makes a new sub list
-					else if(cell->car == NULL) {
-						cell->car = get_free_cell();
-						PUSH(s, Cell *, cell->car);
-						cell = cell->car;
-						token = tokenizer_next(tk);
-					}
-					// Moves along the right of a list to place the sub list
-					else {
-						POP(s, Cell *, cell);
-						cell->cdr = get_free_cell();
-						PUSH(s, Cell *, cell->cdr);
-						cell = cell->cdr;
-					}
-					break;
-				case ')':
-					POP(s, Cell *, cell);
-					cell->cdr = machine->nil;
-					token = tokenizer_next(tk);
-					break;
-				default:
+	Tokenizer * tk = make_tokenizer(expr + 1);
+	char * token = tokenizer_next(tk);
+	while(token != NULL) {
+		switch(token[0]) {
+			case '(':
+				// Handles the NIL symbol. (Annoyingly reuses almost all the code in the default case. Must fix)
+				if(token[1] == ')') {
 					if(cell->car == NULL) {
-						cell->car = make_symbol(token);
+						cell->car = machine->nil;
 						token = tokenizer_next(tk);
 					}
 					else {
@@ -72,19 +33,50 @@ Cell * make_expression(char *expr) {
 						PUSH(s, Cell *, cell->cdr);
 						cell = cell->cdr;
 					}
-					break;
-			}
+				}
+				// Makes a new sub list
+				else if(cell->car == NULL) {
+					cell->car = get_free_cell();
+					PUSH(s, Cell *, cell->car);
+					cell = cell->car;
+					token = tokenizer_next(tk);
+				}
+				// Moves along the right of a list to place the sub list
+				else {
+					POP(s, Cell *, cell);
+					cell->cdr = get_free_cell();
+					PUSH(s, Cell *, cell->cdr);
+					cell = cell->cdr;
+				}
+				break;
+			case ')':
+				POP(s, Cell *, cell);
+				cell->cdr = machine->nil;
+				token = tokenizer_next(tk);
+				break;
+			default:
+				if(cell->car == NULL) {
+					cell->car = make_symbol(token);
+					token = tokenizer_next(tk);
+				}
+				else {
+					POP(s, Cell *, cell);
+					cell->cdr = get_free_cell();
+					PUSH(s, Cell *, cell->cdr);
+					cell = cell->cdr;
+				}
+				break;
 		}
-
-		// The stack is not empty so we encountered too few parenthesis
-		if(s.n != 0) {
-			return NULL;
-		}
-
-		destroy_tokenizer(tk);
-
-		return root;
 	}
+
+	// The stack is not empty so we encountered too few parenthesis
+	if(s.n != 0) {
+		return NULL;
+	}
+
+	destroy_tokenizer(tk);
+
+	return root.car;
 }
 
 Tokenizer * make_tokenizer(char * string) {
@@ -128,6 +120,9 @@ char * tokenizer_next(Tokenizer * tk) {
 			tk->token[1] = '\0';
 			return tk->token;
 		case ' ':
+			++tk->index;
+			return tokenizer_next(tk);
+		case '\t':
 			++tk->index;
 			return tokenizer_next(tk);
 		default:;

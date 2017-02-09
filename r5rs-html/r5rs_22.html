@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Tail recursion</TITLE>
+<link href="r5rs_23.html" rel=Next>
+<link href="r5rs_21.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_21.html">previous</A>, <A HREF="r5rs_23.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H2><A NAME="SEC24" HREF="r5rs_toc.html#TOC24">3.5  Proper tail recursion</A></H2>
+
+<P>
+Implementations of Scheme are required to be properly tail-recursive.
+Procedure calls that occur in certain syntactic contexts defined below are
+`tail calls'.  A Scheme implementation is properly tail-recursive if it
+supports an unbounded number of active tail calls.  A call is active if the
+called procedure may still return.  Note that this includes calls that may be
+returned from either by the current continuation or by continuations captured
+earlier by call-with-current-continuation that are later invoked.  In the
+absence of captured continuations, calls could return at most once and the
+active calls would be those that had not yet returned.  A formal definition of
+proper tail recursion can be found in [8].
+
+</P>
+<P>
+Rationale:
+
+</P>
+
+<BLOCKQUOTE>
+
+<P>
+Intuitively, no space is needed for an active tail call because the
+continuation that is used in the tail call has the same semantics as the
+continuation passed to the procedure containing the call.  Although an improper
+implementation might use a new continuation in the call, a return to this new
+continuation would be followed immediately by a return to the continuation
+passed to the procedure.  A properly tail-recursive implementation returns to
+that continuation directly.
+
+</P>
+<P>
+Proper tail recursion was one of the central ideas in Steele and Sussman's
+original version of Scheme.  Their first Scheme interpreter implemented both
+functions and actors.  Control flow was expressed using actors, which differed
+from functions in that they passed their results on to another actor instead of
+returning to a caller.  In the terminology of this section, each actor finished
+with a tail call to another actor.
+
+</P>
+<P>
+Steele and Sussman later observed that in their interpreter the code for
+dealing with actors was identical to that for functions and thus there was no
+need to include both in the language.
+
+</P>
+</BLOCKQUOTE>
+
+<P>
+A tail call is a procedure call that occurs in a tail context.  Tail contexts
+are defined inductively.  Note that a tail context is always determined with
+respect to a particular lambda expression.
+
+</P>
+
+<UL>
+
+<LI>
+
+The last expression within the body of a lambda expression, shown as &#60;tail
+expression&#62; below, occurs in a tail context.
+
+
+<PRE>
+    (lambda &#60;formals&#62;
+      &#60;definition&#62;* &#60;expression&#62;* &#60;tail expression&#62;)
+</PRE>
+
+<LI>
+
+If one of the following expressions is in a tail context, then the
+subexpressions shown as &#60;tail expression&#62; are in a tail context.  These were
+derived from rules in the grammar given in chapter 7 by replacing some
+occurrences of &#60;expression&#62; with &#60;tail expression&#62;.  Only those rules that
+contain tail contexts are shown here.
+
+
+<PRE>
+    (if &#60;expression&#62; &#60;tail expression&#62; &#60;tail expression&#62;)
+    (if &#60;expression&#62; &#60;tail expression&#62;)
+
+    (cond &#60;cond clause&#62;+)
+    (cond &#60;cond clause&#62;* (else &#60;tail sequence&#62;))
+
+    (case &#60;expression&#62;
+      &#60;case clause&#62;+)
+    (case &#60;expression&#62;
+      &#60;case clause&#62;*
+      (else &#60;tail sequence&#62;))
+
+    (and &#60;expression&#62;* &#60;tail expression&#62;)
+    (or &#60;expression&#62;* &#60;tail expression&#62;)
+
+    (let (&#60;binding spec&#62;*) &#60;tail body&#62;)
+    (let &#60;variable&#62; (&#60;binding spec&#62;*) &#60;tail body&#62;)
+    (let* (&#60;binding spec&#62;*) &#60;tail body&#62;)
+    (letrec (&#60;binding spec&#62;*) &#60;tail body&#62;)
+
+    (let-syntax (&#60;syntax spec&#62;*) &#60;tail body&#62;)
+    (letrec-syntax (&#60;syntax spec&#62;*) &#60;tail body&#62;)
+
+    (begin &#60;tail sequence&#62;)
+
+    (do (&#60;iteration spec&#62;*)
+        (&#60;test&#62; &#60;tail sequence&#62;)
+      &#60;expression&#62;*)
+</PRE>
+
+  where
+
+
+<PRE>
+    &#60;cond clause&#62; ---&#62; (&#60;test&#62; &#60;tail sequence&#62;)
+    &#60;case clause&#62; ---&#62; ((&#60;datum&#62;*) &#60;tail sequence&#62;)
+
+    &#60;tail body&#62; ---&#62; &#60;definition&#62;* &#60;tail sequence&#62;
+    &#60;tail sequence&#62; ---&#62; &#60;expression&#62;* &#60;tail expression&#62;
+</PRE>
+
+<LI>
+
+If a cond expression is in a tail context, and has a clause of the form
+
+
+<PRE>
+(&#60;expression1&#62; =&#62; &#60;expression2&#62;)
+</PRE>
+
+then the (implied) call to the procedure that results from the evaluation of
+&#60;expression2&#62; is in a tail context.  &#60;expression2&#62; itself is not in a tail
+context.
+
+</UL>
+
+<P>
+Certain built-in procedures are also required to perform tail calls.  The first
+argument passed to apply and to call-with-current-continuation, and the second
+argument passed to call-with-values, must be called via a tail call.
+Similarly, eval must evaluate its argument as if it were in tail position
+within the eval procedure.
+
+</P>
+<P>
+In the following example the only tail call is the call to f.  None of the
+calls to g or h are tail calls.  The reference to x is in a tail context, but
+it is not a call and thus is not a tail call.
+
+</P>
+
+<PRE>
+  (lambda ()
+    (if (g)
+        (let ((x (h)))
+          x)
+        (and (g) (f))))
+</PRE>
+
+<P>
+Note: Implementations are allowed, but not required, to recognize that some
+non-tail calls, such as the call to h above, can be evaluated as though they
+were tail calls.  In the example above, the let expression could be compiled as
+a tail call to h. (The possibility of h returning an unexpected number of
+values can be ignored, because in that case the effect of the let is explicitly
+unspecified and implementation-dependent.)
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_21.html">previous</A>, <A HREF="r5rs_23.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

@@ -1,0 +1,49 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Disjointness of types</TITLE>
+<link href="r5rs_20.html" rel=Next>
+<link href="r5rs_18.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_18.html">previous</A>, <A HREF="r5rs_20.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H2><A NAME="SEC21" HREF="r5rs_toc.html#TOC21">3.2  Disjointness of types</A></H2>
+
+<P>
+No object satisfies more than one of the following predicates:
+
+</P>
+
+<PRE>
+  boolean?          pair?
+  symbol?           number?
+  char?             string?
+  vector?           port?
+  procedure?
+</PRE>
+
+<P>
+These predicates define the types boolean, pair, symbol, number, char (or
+character), string, vector, port, and procedure.  The empty list is a special
+object of its own type; it satisfies none of the above predicates.
+
+</P>
+<P>
+Although there is a separate boolean type, any Scheme value can be used as a
+boolean value for the purpose of a conditional test.  As explained in section
+6.3.1, all values count as true in such a test except for #f.  This report uses
+the word "true" to refer to any Scheme value except #f, and the word "false" to
+refer to #f.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_18.html">previous</A>, <A HREF="r5rs_20.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

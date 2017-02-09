@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Binding constructs for syntactic keywords</TITLE>
+<link href="r5rs_40.html" rel=Next>
+<link href="r5rs_38.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_38.html">previous</A>, <A HREF="r5rs_40.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC41" HREF="r5rs_toc.html#TOC41">4.3.1  Binding constructs for syntactic keywords</A></H3>
+
+<P>
+Let-syntax and letrec-syntax are analogous to let and letrec, but they bind
+syntactic keywords to macro transformers instead of binding variables to
+locations that contain values.  Syntactic keywords may also be bound at top
+level; see section 5.3.
+
+</P>
+
+<PRE>
+[[syntax]] (let-syntax &#60;bindings&#62; &#60;body&#62;)
+</PRE>
+
+<P>
+Syntax: &#60;Bindings&#62; should have the form
+
+</P>
+
+<PRE>
+    ((&#60;keyword&#62; &#60;transformer spec&#62;) ...)
+</PRE>
+
+<P>
+Each &#60;keyword&#62; is an identifier, each &#60;transformer spec&#62; is an instance of
+syntax-rules, and &#60;body&#62; should be a sequence of one or more expressions.  It
+is an error for a &#60;keyword&#62; to appear more than once in the list of keywords
+being bound.
+
+</P>
+<P>
+Semantics: The &#60;body&#62; is expanded in the syntactic environment obtained by
+extending the syntactic environment of the let-syntax expression with macros
+whose keywords are the &#60;keyword&#62;s, bound to the specified transformers.  Each
+binding of a &#60;keyword&#62; has &#60;body&#62; as its region.
+
+</P>
+
+<PRE>
+  (let-syntax ((when (syntax-rules ()
+                       ((when test stmt1 stmt2 ...)
+                        (if test
+                            (begin stmt1
+                                   stmt2 ...))))))
+    (let ((if #t))
+      (when if (set! if 'now))
+      if))                           =>  now
+
+  (let ((x 'outer))
+    (let-syntax ((m (syntax-rules () ((m) x))))
+      (let ((x 'inner))
+        (m))))                       =>  outer
+</PRE>
+
+
+<PRE>
+[[syntax]] (letrec-syntax &#60;bindings&#62; &#60;body&#62;)
+</PRE>
+
+<P>
+Syntax: Same as for let-syntax.
+
+</P>
+<P>
+Semantics: The &#60;body&#62; is expanded in the syntactic environment obtained by
+extending the syntactic environment of the letrec-syntax expression with macros
+whose keywords are the &#60;keyword&#62;s, bound to the specified transformers.  Each
+binding of a &#60;keyword&#62; has the &#60;bindings&#62; as well as the &#60;body&#62; within its
+region, so the transformers can transcribe expressions into uses of the macros
+introduced by the letrec-syntax expression.
+
+</P>
+
+<PRE>
+  (letrec-syntax
+    ((my-or (syntax-rules ()
+              ((my-or) #f)
+              ((my-or e) e)
+              ((my-or e1 e2 ...)
+               (let ((temp e1))
+                 (if temp
+                     temp
+                     (my-or e2 ...)))))))
+    (let ((x #f)
+          (y 7)
+          (temp 8)
+          (let odd?)
+          (if even?))
+      (my-or x
+             (let temp)
+             (if y)
+             y)))        =>  7
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_38.html">previous</A>, <A HREF="r5rs_40.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

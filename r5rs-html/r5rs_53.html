@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Syntax of numerical constants</TITLE>
+<link href="r5rs_54.html" rel=Next>
+<link href="r5rs_52.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_52.html">previous</A>, <A HREF="r5rs_54.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC55" HREF="r5rs_toc.html#TOC55">6.2.4  Syntax of numerical constants</A></H3>
+
+<P>
+The syntax of the written representations for numbers is described formally in
+section 7.1.1.  Note that case is not significant in numerical constants.
+
+</P>
+<P>
+A number may be written in binary, octal, decimal, or hexadecimal by the use of
+a radix prefix.  The radix prefixes are #b (binary), #o (octal), #d (decimal),
+and #x (hexadecimal).  With no radix prefix, a number is assumed to be
+expressed in decimal.
+
+</P>
+<P>
+A numerical constant may be specified to be either exact or inexact by a
+prefix.  The prefixes are #e for exact, and #i for inexact.  An exactness
+prefix may appear before or after any radix prefix that is used.  If the
+written representation of a number has no exactness prefix, the constant may be
+either inexact or exact.  It is inexact if it contains a decimal point, an
+exponent, or a "#" character in the place of a digit, otherwise it is exact.
+
+</P>
+<P>
+In systems with inexact numbers of varying precisions it may be useful to
+specify the precision of a constant.  For this purpose, numerical constants may
+be written with an exponent marker that indicates the desired precision of the
+inexact representation.  The letters s, f, d, and l specify the use of short,
+single, double, and long precision, respectively.  (When fewer than four
+internal inexact representations exist, the four size specifications are mapped
+onto those available.  For example, an implementation with two internal
+representations may map short and single together and long and double
+together.)  In addition, the exponent marker e specifies the default precision
+for the implementation.  The default precision has at least as much precision
+as double, but implementations may wish to allow this default to be set by the
+user.
+
+</P>
+
+<PRE>
+  3.14159265358979F0
+         Round to single -- 3.141593
+  0.6L0
+         Extend to long -- .600000000000000
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_52.html">previous</A>, <A HREF="r5rs_54.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

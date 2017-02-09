@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Output</TITLE>
+<link href="r5rs_69.html" rel=Next>
+<link href="r5rs_67.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_67.html">previous</A>, <A HREF="r5rs_69.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC70" HREF="r5rs_toc.html#TOC70">6.6.3  Output</A></H3>
+
+
+<PRE>
+[[library procedure]] (write obj)
+[[library procedure]] (write obj port)
+</PRE>
+
+<P>
+Writes a written representation of obj to the given port.  Strings that appear
+in the written representation are enclosed in doublequotes, and within those
+strings backslash and doublequote characters are escaped by backslashes.
+Character objects are written using the #\ notation.  Write returns an
+unspecified value.  The port argument may be omitted, in which case it defaults
+to the value returned by current-output-port.
+
+</P>
+
+<PRE>
+[[library procedure]] (display obj)
+[[library procedure]] (display obj port)
+</PRE>
+
+<P>
+Writes a representation of obj to the given port.  Strings that appear in the
+written representation are not enclosed in doublequotes, and no characters are
+escaped within those strings.  Character objects appear in the representation
+as if written by write-char instead of by write.  Display returns an
+unspecified value.  The port argument may be omitted, in which case it defaults
+to the value returned by current-output-port.
+
+</P>
+<P>
+Rationale: Write is intended for producing machine-readable output and display
+is for producing human-readable output.  Implementations that allow
+"slashification" within symbols will probably want write but not display to
+slashify funny characters in symbols.
+
+</P>
+
+<PRE>
+[[library procedure]] (newline)
+[[library procedure]] (newline port)
+</PRE>
+
+<P>
+Writes an end of line to port.  Exactly how this is done differs from one
+operating system to another.  Returns an unspecified value.  The port argument
+may be omitted, in which case it defaults to the value returned by
+current-output-port.
+
+</P>
+
+<PRE>
+[[procedure]] (write-char char)
+[[procedure]] (write-char char port)
+</PRE>
+
+<P>
+Writes the character char (not an external representation of the character) to
+the given port and returns an unspecified value.  The port argument may be
+omitted, in which case it defaults to the value returned by
+current-output-port.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_67.html">previous</A>, <A HREF="r5rs_69.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

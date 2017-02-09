@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - System interface</TITLE>
+<link href="r5rs_70.html" rel=Next>
+<link href="r5rs_68.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_68.html">previous</A>, <A HREF="r5rs_70.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC71" HREF="r5rs_toc.html#TOC71">6.6.4  System interface</A></H3>
+
+<P>
+Questions of system interface generally fall outside of the domain of this
+report.  However, the following operations are important enough to deserve
+description here.
+
+</P>
+
+<PRE>
+[[optional procedure]] (load filename)
+</PRE>
+
+<P>
+Filename should be a string naming an existing file containing Scheme source
+code.  The load procedure reads expressions and definitions from the file and
+evaluates them sequentially.  It is unspecified whether the results of the
+expressions are printed.  The load procedure does not affect the values
+returned by current-input-port and current-output-port.  Load returns an
+unspecified value.
+
+</P>
+<P>
+Rationale: For portability, load must operate on source files.  Its operation
+on other kinds of files necessarily varies among implementations.
+
+</P>
+
+<PRE>
+[[optional procedure]] (transcript-on filename)
+[[optional procedure]] (transcript-off)
+</PRE>
+
+<P>
+Filename must be a string naming an output file to be created.  The effect of
+transcript-on is to open the named file for output, and to cause a transcript
+of subsequent interaction between the user and the Scheme system to be written
+to the file.  The transcript is ended by a call to transcript-off, which closes
+the transcript file.  Only one transcript may be in progress at any time,
+though some implementations may relax this restriction.  The values returned by
+these procedures are unspecified.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_68.html">previous</A>, <A HREF="r5rs_70.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

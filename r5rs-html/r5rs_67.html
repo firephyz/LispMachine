@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Input</TITLE>
+<link href="r5rs_68.html" rel=Next>
+<link href="r5rs_66.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_66.html">previous</A>, <A HREF="r5rs_68.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC69" HREF="r5rs_toc.html#TOC69">6.6.2  Input</A></H3>
+
+
+<PRE>
+[[library procedure]] (read)
+[[library procedure]] (read port)
+</PRE>
+
+<P>
+Read converts external representations of Scheme objects into the objects
+themselves.  That is, it is a parser for the nonterminal &#60;datum&#62; (see sections
+7.1.2 and 6.3.2).  Read returns the next object parsable from the given input
+port, updating port to point to the first character past the end of the
+external representation of the object.
+
+</P>
+<P>
+If an end of file is encountered in the input before any characters are found
+that can begin an object, then an end of file object is returned.  The port
+remains open, and further attempts to read will also return an end of file
+object.  If an end of file is encountered after the beginning of an object's
+external representation, but the external representation is incomplete and
+therefore not parsable, an error is signalled.
+
+</P>
+<P>
+The port argument may be omitted, in which case it defaults to the value
+returned by current-input-port.  It is an error to read from a closed port.
+
+</P>
+
+<PRE>
+[[procedure]] (read-char)
+[[procedure]] (read-char port)
+</PRE>
+
+<P>
+Returns the next character available from the input port, updating the port to
+point to the following character.  If no more characters are available, an end
+of file object is returned.  Port may be omitted, in which case it defaults to
+the value returned by current-input-port.
+
+</P>
+
+<PRE>
+[[procedure]] (peek-char)
+[[procedure]] (peek-char port)
+</PRE>
+
+<P>
+Returns the next character available from the input port, without updating the
+port to point to the following character.  If no more characters are available,
+an end of file object is returned.  Port may be omitted, in which case it
+defaults to the value returned by current-input-port.
+
+</P>
+<P>
+Note: The value returned by a call to peek-char is the same as the value that
+would have been returned by a call to read-char with the same port.  The only
+difference is that the very next call to read-char or peek-char on that port
+will return the value returned by the preceding call to peek-char.  In
+particular, a call to peek-char on an interactive port will hang waiting for
+input whenever a call to read-char would have hung.
+
+</P>
+
+<PRE>
+[[procedure]] (eof-object? obj)
+</PRE>
+
+<P>
+Returns #t if obj is an end of file object, otherwise returns #f.  The precise
+set of end of file objects will vary among implementations, but in any case no
+end of file object will ever be an object that can be read in using read.
+
+</P>
+
+<PRE>
+[[procedure]] (char-ready?)
+[[procedure]] (char-ready? port)
+</PRE>
+
+<P>
+Returns #t if a character is ready on the input port and returns #f otherwise.
+If char-ready returns #t then the next read-char operation on the given port is
+guaranteed not to hang.  If the port is at end of file then char-ready?
+returns #t.  Port may be omitted, in which case it defaults to the value
+returned by current-input-port.
+
+</P>
+<P>
+Rationale: Char-ready? exists to make it possible for a program to accept
+characters from interactive ports without getting stuck waiting for input.  Any
+input editors associated with such ports must ensure that characters whose
+existence has been asserted by char-ready? cannot be rubbed out.  If
+char-ready? were to return #f at end of file, a port at end of file would be
+indistinguishable from an interactive port that has no ready characters.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_66.html">previous</A>, <A HREF="r5rs_68.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

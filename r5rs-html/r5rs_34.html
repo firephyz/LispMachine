@@ -1,0 +1,45 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Sequencing</TITLE>
+<link href="r5rs_35.html" rel=Next>
+<link href="r5rs_33.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_33.html">previous</A>, <A HREF="r5rs_35.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC36" HREF="r5rs_toc.html#TOC36">4.2.3  Sequencing</A></H3>
+
+
+<PRE>
+[[library syntax]] (begin &#60;expression1&#62; &#60;expression2&#62; ...)
+</PRE>
+
+<P>
+The &#60;expression&#62;s are evaluated sequentially from left to right, and the
+value(s) of the last &#60;expression&#62; is(are) returned.  This expression type is
+used to sequence side effects such as input and output.
+
+</P>
+
+<PRE>
+  (define x 0)
+
+  (begin (set! x 5)
+         (+ x 1))                  =>  6
+
+  (begin (display "4 plus 1 equals ")
+         (display (+ 4 1)))        -|  4 plus 1 equals 5
+                                   =>  unspecified
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_33.html">previous</A>, <A HREF="r5rs_35.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

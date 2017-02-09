@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Quasiquotations</TITLE>
+<link href="r5rs_76.html" rel=Next>
+<link href="r5rs_74.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_74.html">previous</A>, <A HREF="r5rs_76.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC77" HREF="r5rs_toc.html#TOC77">7.1.4  Quasiquotations</A></H3>
+
+<P>
+The following grammar for quasiquote expressions is not context-free.  It
+is presented as a recipe for generating an infinite number of production
+rules.  Imagine a copy of the following rules for D = 1, 2, 3, .... D
+keeps track of the nesting depth.
+
+</P>
+
+<PRE>
+&#60;quasiquotation&#62; ---&#62; &#60;quasiquotation 1&#62;
+
+&#60;qq template 0&#62; ---&#62; &#60;expression&#62;
+
+&#60;quasiquotation D&#62; ---&#62; `&#60;qq template D&#62; | (quasiquote &#60;qq template D&#62;)
+
+&#60;qq template D&#62; ---&#62; &#60;simple datum&#62; | &#60;list qq template D&#62;
+                   | &#60;vector qq template D&#62; | &#60;unquotation D&#62;
+
+&#60;list qq template D&#62; ---&#62; (&#60;qq template or splice D&#62;*)
+                        | (&#60;qq template or splice D&#62;+ . &#60;qq template D&#62;)
+                        | '&#60;qq template D&#62; | &#60;quasiquotation D+1&#62;
+
+&#60;vector qq template D&#62; ---&#62; #(&#60;qq template or splice D&#62;*)
+
+&#60;unquotation D&#62; ---&#62; ,&#60;qq template D-1&#62; | (unquote &#60;qq template D-1&#62;)
+
+&#60;qq template or splice D&#62; ---&#62; &#60;qq template D&#62; | &#60;splicing unquotation D&#62;
+
+&#60;splicing unquotation D&#62; ---&#62; ,@&#60;qq template D-1&#62;
+                            | (unquote-splicing &#60;qq template D-1&#62;)
+</PRE>
+
+<P>
+In &#60;quasiquotation&#62;s, a &#60;list qq template D&#62; can sometimes be confused with
+either an &#60;unquotation D&#62; or a &#60;splicing unquotation D&#62;.  The interpretation as
+an &#60;unquotation&#62; or &#60;splicing unquotation D&#62; takes precedence.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_74.html">previous</A>, <A HREF="r5rs_76.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

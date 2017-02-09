@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Storage model</TITLE>
+<link href="r5rs_22.html" rel=Next>
+<link href="r5rs_20.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_20.html">previous</A>, <A HREF="r5rs_22.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H2><A NAME="SEC23" HREF="r5rs_toc.html#TOC23">3.4  Storage model</A></H2>
+
+<P>
+Variables and objects such as pairs, vectors, and strings implicitly denote
+locations or sequences of locations.  A string, for example, denotes as many
+locations as there are characters in the string.  (These locations need not
+correspond to a full machine word.) A new value may be stored into one of these
+locations using the string-set! procedure, but the string continues to denote
+the same locations as before.
+
+</P>
+<P>
+An object fetched from a location, by a variable reference or by a procedure
+such as car, vector-ref, or string-ref, is equivalent in the sense of eqv?
+(section 6.1) to the object last stored in the location before the fetch.
+
+</P>
+<P>
+Every location is marked to show whether it is in use.  No variable or object
+ever refers to a location that is not in use.  Whenever this report speaks of
+storage being allocated for a variable or object, what is meant is that an
+appropriate number of locations are chosen from the set of locations that are
+not in use, and the chosen locations are marked to indicate that they are now
+in use before the variable or object is made to denote them.
+
+</P>
+<P>
+In many systems it is desirable for constants (i.e. the values of literal
+expressions) to reside in read-only-memory.  To express this, it is convenient
+to imagine that every object that denotes locations is associated with a flag
+telling whether that object is mutable or immutable.  In such systems literal
+constants and the strings returned by symbol-&#62;string are immutable objects,
+while all objects created by the other procedures listed in this report are
+mutable.  It is an error to attempt to store a new value into a location that
+is denoted by an immutable object.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_20.html">previous</A>, <A HREF="r5rs_22.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Numerical types</TITLE>
+<link href="r5rs_51.html" rel=Next>
+<link href="r5rs_49.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_49.html">previous</A>, <A HREF="r5rs_51.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC52" HREF="r5rs_toc.html#TOC52">6.2.1  Numerical types</A></H3>
+
+<P>
+Mathematically, numbers may be arranged into a tower of subtypes in which each
+level is a subset of the level above it:
+
+</P>
+
+<PRE>
+  number
+  complex
+  real
+  rational
+  integer
+</PRE>
+
+<P>
+For example, 3 is an integer.  Therefore 3 is also a rational, a real, and a
+complex.  The same is true of the Scheme numbers that model 3.  For Scheme
+numbers, these types are defined by the predicates number?, complex?, real?,
+rational?, and integer?.
+
+</P>
+<P>
+There is no simple relationship between a number's type and its representation
+inside a computer.  Although most implementations of Scheme will offer at least
+two different representations of 3, these different representations denote the
+same integer.
+
+</P>
+<P>
+Scheme's numerical operations treat numbers as abstract data, as independent of
+their representation as possible.  Although an implementation of Scheme may use
+fixnum, flonum, and perhaps other representations for numbers, this should not
+be apparent to a casual programmer writing simple programs.
+
+</P>
+<P>
+It is necessary, however, to distinguish between numbers that are represented
+exactly and those that may not be.  For example, indexes into data structures
+must be known exactly, as must some polynomial coefficients in a symbolic
+algebra system.  On the other hand, the results of measurements are inherently
+inexact, and irrational numbers may be approximated by rational and therefore
+inexact approximations.  In order to catch uses of inexact numbers where exact
+numbers are required, Scheme explicitly distinguishes exact from inexact
+numbers.  This distinction is orthogonal to the dimension of type.
+
+</P>
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_49.html">previous</A>, <A HREF="r5rs_51.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>

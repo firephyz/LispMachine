@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.54
+     from r5rs.texi on 8 March 1998 -->
+
+<TITLE>Revised(5) Report on the Algorithmic Language Scheme - Expressions (formal)</TITLE>
+<link href="r5rs_75.html" rel=Next>
+<link href="r5rs_73.html" rel=Previous>
+<link href="r5rs_toc.html" rel=ToC>
+
+</HEAD>
+<BODY>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_73.html">previous</A>, <A HREF="r5rs_75.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H3><A NAME="SEC76" HREF="r5rs_toc.html#TOC76">7.1.3  Expressions</A></H3>
+
+
+<PRE>
+&#60;expression&#62; ---&#62; &#60;variable&#62; | &#60;literal&#62; | &#60;procedure call&#62;
+                | &#60;lambda expression&#62; | &#60;conditional&#62; | &#60;assignment&#62;
+                | &#60;derived expression&#62; | &#60;macro use&#62; | &#60;macro block&#62;
+
+&#60;literal&#62; ---&#62; &#60;quotation&#62; | &#60;self-evaluating&#62;
+
+&#60;self-evaluating&#62; ---&#62; &#60;boolean&#62; | &#60;number&#62; | &#60;character&#62; | &#60;string&#62;
+
+&#60;quotation&#62; ---&#62; '&#60;datum&#62; | (quote &#60;datum&#62;)
+
+&#60;procedure call&#62; ---&#62; (&#60;operator&#62; &#60;operand&#62;*)
+
+&#60;operator&#62; ---&#62; &#60;expression&#62;
+
+&#60;operand&#62; ---&#62; &#60;expression&#62;
+
+&#60;lambda expression&#62; ---&#62; (lambda &#60;formals&#62; &#60;body&#62;)
+
+&#60;formals&#62; ---&#62; (&#60;variable&#62;*) | &#60;variable&#62; | (&#60;variable&#62;+ . &#60;variable&#62;)
+
+&#60;body&#62; ---&#62; &#60;definition&#62;* &#60;sequence&#62;
+
+&#60;sequence&#62; ---&#62; &#60;command&#62;* &#60;expression&#62;
+
+&#60;command&#62; ---&#62; &#60;expression&#62;
+
+&#60;conditional&#62; ---&#62; (if &#60;test&#62; &#60;consequent&#62; &#60;alternate&#62;)
+
+&#60;test&#62; ---&#62; &#60;expression&#62;
+
+&#60;consequent&#62; ---&#62; &#60;expression&#62;
+
+&#60;alternate&#62; ---&#62; &#60;expression&#62; | &#60;empty&#62;
+
+&#60;assignment&#62; ---&#62; (set! &#60;variable&#62; &#60;expression&#62;)
+
+&#60;derived expression&#62; ---&#62;
+       (cond &#60;cond clause&#62;+)
+     | (cond &#60;cond clause&#62;* (else &#60;sequence&#62;))
+     | (case &#60;expression&#62;
+         &#60;case clause&#62;+)
+     | (case &#60;expression&#62;
+         &#60;case clause&#62;*
+         (else &#60;sequence&#62;))
+     | (and &#60;test&#62;*)
+     | (or &#60;test&#62;*)
+     | (let (&#60;binding spec&#62;*) &#60;body&#62;)
+     | (let &#60;variable&#62; (&#60;binding spec&#62;*) &#60;body&#62;)
+     | (let* (&#60;binding spec&#62;*) &#60;body&#62;)
+     | (letrec (&#60;binding spec&#62;*) &#60;body&#62;)
+     | (begin &#60;sequence&#62;)
+     | (do (&#60;iteration spec&#62;*)
+           (&#60;test&#62; &#60;do result&#62;)
+         &#60;command&#62;*)
+     | (delay &#60;expression&#62;)
+     | &#60;quasiquotation&#62;
+
+&#60;cond clause&#62; ---&#62; (&#60;test&#62; &#60;sequence&#62;)
+                 | (&#60;test&#62;)
+                 | (&#60;test&#62; =&#62; &#60;recipient&#62;)
+
+&#60;recipient&#62; ---&#62; &#60;expression&#62;
+
+&#60;case clause&#62; ---&#62; ((&#60;datum&#62;*) &#60;sequence&#62;)
+
+&#60;binding spec&#62; ---&#62; (&#60;variable&#62; &#60;expression&#62;)
+
+&#60;iteration spec&#62; ---&#62; (&#60;variable&#62; &#60;init&#62; &#60;step&#62;) | (&#60;variable&#62; &#60;init&#62;)
+
+&#60;init&#62; ---&#62; &#60;expression&#62;
+
+&#60;step&#62; ---&#62; &#60;expression&#62;
+
+&#60;do result&#62; ---&#62; &#60;sequence&#62; | &#60;empty&#62;
+
+&#60;macro use&#62; ---&#62; (&#60;keyword&#62; &#60;datum&#62;*)
+
+&#60;keyword&#62; ---&#62; &#60;identifier&#62;
+
+&#60;macro block&#62; ---&#62; (let-syntax (&#60;syntax spec&#62;*) &#60;body&#62;)
+                 | (letrec-syntax (&#60;syntax spec&#62;*) &#60;body&#62;)
+
+&#60;syntax spec&#62; ---&#62; (&#60;keyword&#62; &#60;transformer spec&#62;)
+</PRE>
+
+<P><HR><P>
+<p>Go to the <A HREF="r5rs_1.html">first</A>, <A HREF="r5rs_73.html">previous</A>, <A HREF="r5rs_75.html">next</A>, <A HREF="r5rs_83.html">last</A> section, <A HREF="r5rs_toc.html">table of contents</A>.
+</BODY>
+</HTML>
