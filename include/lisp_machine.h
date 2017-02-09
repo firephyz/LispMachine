@@ -17,10 +17,15 @@
 	#define SYS_COND 	0x40
 	#define SYS_LAMBDA 	0x80
 
+	#define EVAL_CONTEXT_EVAL 0
+	#define EVAL_CONTEXT_EVLIS 1
+	#define EVAL_CONTEXT_CONENV 2
+
 	extern int chars_per_pointer;
 
 	typedef struct cell_t Cell;
 	typedef struct lisp_machine_t Lisp_Machine;
+	typedef struct eval_context_t Eval_Context;
 
 	struct cell_t {
 		Cell *car;
@@ -30,20 +35,70 @@
 		int type;
 	};
 
+	// NOTICE:
+	// I have a choice in regards to the implementation of the evaluator environment.
+	// 1) I can used a simple association list. Fairly straight forward
+	// 		- Actually, this may not work. If evaluation arguments are found in
+	//			an A-list to be evaluated by the evaluator itself, then what stops
+	//			the infinitely recursive A-lists required for evaluation?
+	//		- One choice to resolve this is to not use the evaluator to self-evaluate
+	//			the A-lists.
+	// 2) I can instead use special registers for storing the addresses of lists
+	// 		necessary for the evaluation of a evaluation function.
+	// The current implementation will use method 2.
+
+	/*
+	The machine keeps track of important lists necessary for evaluation.
+	$[func] - these are calls to the system evaluation functions (eval, apply, evlis, evif, conenv, lookup)
+	@[func] - Denotes a variable to be found in the system environment.
+				- These include:
+					expr (the current expression being evaluated)
+					env  (the current environment in which to evaluate the expression)
+					pred (the predicate used in the $[evif] evaluator function)
+	Everything else is split among the axiomatic functions (car, cdr, cons, eq?, atom?, if, quote, lambda)
+	*/
+
 	struct lisp_machine_t {
 		bool is_running;
+
 		int mem_used;
 		int mem_free;
-		Cell * free_mem;
-		Cell * nil;
-		Cell * eval_func;
-		Cell * apply_func;
-		Cell * evlis_func;
-		Cell * evif_func;
-		Cell * conenv_func;
-		Cell * lookup_func;
+		Cell *free_mem;
+		Cell *nil;
 
-		Cell * sys_env;
+		// $[func]
+		Cell * sys_eval;
+		Cell * sys_apply;
+		Cell * sys_evlis;
+		Cell * sys_evif;
+		Cell * sys_conenv;
+		Cell * sys_lookup;
+
+		// System environment
+		Eval_Context *sys_env_stack;
+
+		Cell *apply_func;
+		Cell *apply_args;
+		Cell *apply_env;
+
+		Cell *evif_pred;
+		Cell *evif_then;
+		Cell *evif_else;
+		Cell *evif_env;
+
+		Cell *lookup_var;
+		Cell *lookup_env;
+	};
+
+	union Eval_Context_Frame {
+		Cell *eval_args[2];
+		Cell *evlis_args[2];
+		Cell *conenv_args[3];
+	};
+
+	struct eval_context_t {
+		int func;
+		union Eval_Context_Frame frame;
 	};
 
 	Lisp_Machine * init_machine();

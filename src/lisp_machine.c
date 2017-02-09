@@ -34,56 +34,68 @@ Lisp_Machine * init_machine() {
 	machine->nil->is_atom = true;
 
 	// Setup the evaluator code
-	machine->eval_func = make_expression("							\
-		(if (atom? expr)											\
-            (lookup expr env)										\
-            (if (eq? (car expr) (quote if))							\
-                (evif (car (cdr expr))								\
-                      (car (cdr (cdr expr)))						\
-                      (car (cdr (cdr (cdr expr))))					\
-                      env)											\
-                (if (eq? (car expr) (quote quote))					\
-                    (car (cdr expr))								\
-                    (if (eq? (car expr) (quote lambda))				\
-                        expr 										\
-                        (apply (car expr)							\
-                               (evlis (cdr expr) env)				\
-                               env)))))");
-	machine->apply_func = make_expression("							\
-		(if (atom? func)											\
-            (if (eq? func (quote car))								\
-                (car (car args))									\
-                (if (eq? func (quote cdr))							\
-                    (cdr (car args))								\
-                    (if (eq? func (quote cons))						\
-                        (cons (car args) (car (cdr args)))			\
-                        (if (eq? func (quote eq?))					\
-                            (eq? (car args) (car (cdr args)))		\
-                            (if (eq? func (quote atom?))			\
-                                (atom? (car args))					\
-                                (apply (eval func env)				\
-                                       args 						\
-                                       env))))))					\
-            (eval (car (cdr (cdr func)))							\
-                  (conenv (car (cdr func)) args env)))");
-	machine->evlis_func = make_expression("							\
-		(if (eq? args (quote ()))									\
-            (quote ())												\
-            (cons (eval (car args) env)								\
-                  (evlis (cdr args) env)))");
-	machine->evif_func = make_expression("							\
-		(if (eval pred env)											\
-            (eval then env)											\
-            (eval else env))");
-	machine->conenv_func = make_expression("						\
-		(if (eq? vars (quote ()))									\
-            env														\
-            (cons (cons (car vars) (car args))						\
-                  (conenv (cdr vars) (cdr args) env)))");
-	machine->lookup_func = make_expression("						\
-		(if (eq? (car (car env)) var)								\
-            (cdr (car env))											\
-            (lookup var (cdr env)))");
+	// Stack-recursive
+	machine->sys_eval = make_expression("							\
+		(if (atom? @[expr])											\
+            ($[lookup] @[expr] @[env])								\
+            (if (eq? (car @[expr]) (quote if))						\
+                ($[evif] (car (cdr @[expr]))						\
+                         (car (cdr (cdr @[expr])))					\
+                         (car (cdr (cdr (cdr @[expr]))))			\
+                         @[env])									\
+                (if (eq? (car @[expr]) (quote quote))				\
+                    (car (cdr @[expr]))								\
+                    (if (eq? (car @[expr]) (quote lambda))			\
+                        @[expr] 									\
+                        ($[apply] (car @[expr])						\
+                                  ($[evlis] (cdr @[expr]) @[env])	\
+                                  @[env])))))");
+	// Tail-recursive
+	machine->sys_apply = make_expression("							\
+		(if (atom? @[func])											\
+            (if (eq? @[func] (quote car))							\
+                (car (car @[args]))									\
+                (if (eq? @[func] (quote cdr))						\
+                    (cdr (car @[args]))								\
+                    (if (eq? @[func] (quote cons))					\
+                        (cons (car @[args]) (car (cdr @[args])))	\
+                        (if (eq? @[func] (quote eq?))				\
+                            (eq? (car @[args]) (car (cdr @[args])))	\
+                            (if (eq? @[func] (quote atom?))			\
+                                (atom? (car @[args]))				\
+                                ($[apply] ($[eval] @[func] @[env])	\
+                                          @[args] 					\
+                                          @[env]))))))				\
+            ($[eval] (car (cdr (cdr @[func])))						\
+                     ($[conenv] (car (cdr @[func]))					\
+                                @[args]								\
+                                @[env])))");
+    // Stack-recursive
+	machine->sys_evlis = make_expression("							\
+		(if (eq? @[args] @[null])									\
+            @[null]													\
+            (cons ($[eval] (car @[args]) @[env])					\
+                  ($[evlis] (cdr @[args]) @[env])))");
+	// Non-recursive
+	machine->sys_evif = make_expression("							\
+		(if ($[eval] @[pred] @[env])								\
+            ($[eval] @[then] @[env])								\
+            ($[eval] @[else] @[env]))");
+	// Stack-recursive
+	machine->sys_conenv = make_expression("						\
+		(if (eq? @[vars] @[null])									\
+            @[env]													\
+            (cons (cons (car @[vars]) (car @[args]))				\
+                  ($[conenv] (cdr @[vars])							\
+                             (cdr @[args])							\
+                             @[env])))");
+	// tail-recursive
+	machine->sys_lookup = make_expression("						\
+		(if (eq? (car (car @[env])) @[var])							\
+            (cdr (car @[env]))										\
+            ($[lookup] @[var] (cdr @[env])))");
+
+	// Initialize the machine system environment
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
