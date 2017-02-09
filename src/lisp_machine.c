@@ -1,6 +1,7 @@
 #include "lisp_machine.h"
 #include "expr_parser.h"
 #include "repl.h"
+#include "stack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -82,7 +83,7 @@ Lisp_Machine * init_machine() {
             ($[eval] @[then] @[env])								\
             ($[eval] @[else] @[env]))");
 	// Stack-recursive
-	machine->sys_conenv = make_expression("						\
+	machine->sys_conenv = make_expression("							\
 		(if (eq? @[vars] @[null])									\
             @[env]													\
             (cons (cons (car @[vars]) (car @[args]))				\
@@ -90,12 +91,13 @@ Lisp_Machine * init_machine() {
                              (cdr @[args])							\
                              @[env])))");
 	// tail-recursive
-	machine->sys_lookup = make_expression("						\
+	machine->sys_lookup = make_expression("							\
 		(if (eq? (car (car @[env])) @[var])							\
             (cdr (car @[env]))										\
             ($[lookup] @[var] (cdr @[env])))");
 
 	// Initialize the machine system environment
+	MAKE_STACK(machine->sys_env_stack, Eval_Context);
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -106,6 +108,7 @@ Lisp_Machine * init_machine() {
 
 void destroy_machine(Lisp_Machine *machine) {
 
+	DESTROY_STACK(&(machine->sys_env_stack));
 	free(machine->free_mem);
 	free(machine);
 }
@@ -133,14 +136,6 @@ void execute(Lisp_Machine * lm) {
 
 	while(machine->is_running) {
 		switch(cell->type) {
-			case SYS_CAR:
-			case SYS_CDR:
-			case SYS_CONS:
-			case SYS_COND:
-			case SYS_ATOM:
-			case SYS_EQ:
-			case SYS_QUOTE:
-			case SYS_LAMBDA:
 			default:
 				break;
 		}

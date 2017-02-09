@@ -3,19 +3,9 @@
 
 	#include <stdint.h>
 	#include <stdbool.h>
+	#include "stack.h"
 
 	#define NUM_OF_CELLS 65536
-
-	#define SYS_NAN 	0x00
-
-	#define SYS_CAR		0x01
-	#define SYS_CDR		0x02
-	#define SYS_CONS 	0x04
-	#define SYS_EQ 		0x08
-	#define SYS_ATOM 	0x10
-	#define SYS_QUOTE 	0x20
-	#define SYS_COND 	0x40
-	#define SYS_LAMBDA 	0x80
 
 	#define EVAL_CONTEXT_EVAL 0
 	#define EVAL_CONTEXT_EVLIS 1
@@ -35,6 +25,7 @@
 		int type;
 	};
 
+	// ******************** Notice regarding the Evaluation Environment  *********************
 	// NOTICE:
 	// I have a choice in regards to the implementation of the evaluator environment.
 	// 1) I can used a simple association list. Fairly straight forward
@@ -47,6 +38,7 @@
 	// 		necessary for the evaluation of a evaluation function.
 	// The current implementation will use method 2.
 
+	// *******************  Machine registers and atom evaluation rules *********************
 	/*
 	The machine keeps track of important lists necessary for evaluation.
 	$[func] - these are calls to the system evaluation functions (eval, apply, evlis, evif, conenv, lookup)
@@ -56,6 +48,21 @@
 					env  (the current environment in which to evaluate the expression)
 					pred (the predicate used in the $[evif] evaluator function)
 	Everything else is split among the axiomatic functions (car, cdr, cons, eq?, atom?, if, quote, lambda)
+	*/
+
+	// ******************** Functions that should be present in the global environment *********************
+	// These functions won't actually be in the environment variable, they will instead be
+	// specially marked by the parser as they are encountered.
+	/*
+		car
+		cdr
+		cons
+		eq?
+		atom?
+		if
+		quote
+
+		quit
 	*/
 
 	struct lisp_machine_t {
@@ -75,7 +82,7 @@
 		Cell * sys_lookup;
 
 		// System environment
-		Eval_Context *sys_env_stack;
+		Stack sys_env_stack;
 
 		Cell *apply_func;
 		Cell *apply_args;

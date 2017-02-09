@@ -158,9 +158,6 @@ int index_of(char * string, char * targets) {
 
 Cell * make_symbol(char * name) {
 
-	// Init the cell type. This will be refined to it's final value as we process the string
-	int cell_type = SYS_CAR | SYS_CDR | SYS_CONS | SYS_EQ | SYS_COND | SYS_ATOM | SYS_QUOTE;
-
 	Cell * result;
 	Cell * prev_cell;
 	int num_of_cells = (strlen(name) + chars_per_pointer - 1) / chars_per_pointer;
@@ -185,11 +182,6 @@ Cell * make_symbol(char * name) {
 
 			int index = (cell_index * chars_per_pointer) + i;
 
-			// Additionally, classify the given symbol if it is a keyword (cons, eq, car...)
-			if(num_of_cells == 1) {
-				determine_cell_type(name, index, &cell_type);
-			}
-
 			if(index >= strlen(name)) {
 				new_cell->car = (Cell *)((uintptr_t)car(new_cell) << 8);
 				continue;
@@ -201,86 +193,8 @@ Cell * make_symbol(char * name) {
 	}
 
 	result->is_atom = true;
-	result->type = cell_type;
 
 	return result;
-}
-
-// Determines if the given symbol is a reserved keyword
-void determine_cell_type(char * name, int index, int * cell_type) {
-	switch(index) {
-		case 0:
-			if(name[index] != 'c') {
-				*cell_type = *cell_type & (-1 ^ SYS_CONS);
-				*cell_type = *cell_type & (-1 ^ SYS_COND);
-				*cell_type = *cell_type & (-1 ^ SYS_CDR);
-				*cell_type = *cell_type & (-1 ^ SYS_CAR);
-			}
-			if(name[index] != 'a') {
-				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
-			}
-			if(name[index] != 'q') {
-				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
-			}
-			if(name[index] != 'e') {
-				*cell_type = *cell_type & (-1 ^ SYS_EQ);
-			}
-			break;
-		case 1:
-			if(name[index] != 'o') {
-				*cell_type = *cell_type & (-1 ^ SYS_CONS);
-				*cell_type = *cell_type & (-1 ^ SYS_COND);
-			}
-			if(name[index] != 't') {
-				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
-			}
-			if(name[index] != 'a') {
-				*cell_type = *cell_type & (-1 ^ SYS_CAR);
-			}
-			if(name[index] != 'd') {
-				*cell_type = *cell_type & (-1 ^ SYS_CDR);
-			}
-			if(name[index] != 'u') {
-				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
-			}
-			if(name[index] != 'q') {
-				*cell_type = *cell_type & (-1 ^ SYS_EQ);
-			}
-			break;
-		case 2:
-			if(name[index] != 'n') {
-				*cell_type = *cell_type & (-1 ^ SYS_CONS);
-				*cell_type = *cell_type & (-1 ^ SYS_COND);
-			}
-			if(name[index] != 'o') {
-				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
-				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
-			}
-			if(name[index] != 'r') {
-				*cell_type = *cell_type & (-1 ^ SYS_CAR);
-				*cell_type = *cell_type & (-1 ^ SYS_CDR);
-			}
-			break;
-		case 3:
-			if(name[index] != 's') {
-				*cell_type = *cell_type & (-1 ^ SYS_CONS);
-			}
-			if(name[index] != 'm') {
-				*cell_type = *cell_type & (-1 ^ SYS_ATOM);
-			}
-			if(name[index] != 'd') {
-				*cell_type = *cell_type & (-1 ^ SYS_COND);
-			}
-			if(name[index] != 't') {
-				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
-			}
-			break;
-		case 4:
-			if(name[index] != 'e') {
-				*cell_type = *cell_type & (-1 ^ SYS_QUOTE);
-			}
-			break;
-	}
 }
 
 char * get_symbol_name(Cell * sym) {
