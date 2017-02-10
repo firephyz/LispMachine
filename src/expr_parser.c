@@ -5,8 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
-
-void determine_cell_type(char * name, int index, int * cell_type);
+#include <stdint.h>
 
 Cell * make_expression(char *expr) {
 
@@ -158,6 +157,8 @@ int index_of(char * string, char * targets) {
 
 Cell * make_symbol(char * name) {
 
+	uint8_t cell_type = determine_cell_type(name);
+
 	Cell * result;
 	Cell * prev_cell;
 	int num_of_cells = (strlen(name) + chars_per_pointer - 1) / chars_per_pointer;
@@ -193,6 +194,16 @@ Cell * make_symbol(char * name) {
 	}
 
 	result->is_atom = true;
+	result->type = cell_type;
+
+	return result;
+}
+
+uint8_t determine_cell_type(char *name) {
+
+	uint8_t result = SYS_GENERAL;
+
+	
 
 	return result;
 }

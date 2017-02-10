@@ -23,7 +23,8 @@ Lisp_Machine * init_machine() {
 	}
 
 	// Create and link the memory cells
-	machine->free_mem = calloc(sizeof(Cell) * NUM_OF_CELLS, sizeof(Cell));
+	machine->memory_block = calloc(sizeof(Cell) * NUM_OF_CELLS, sizeof(Cell));
+	machine->free_mem = machine->memory_block;
 	for(int i = 0; i < NUM_OF_CELLS - 1; ++i) {
 		machine->free_mem[i].cdr = &machine->free_mem[i + 1];
 	}
@@ -33,6 +34,9 @@ Lisp_Machine * init_machine() {
 	machine->nil->car = NULL;
 	machine->nil->cdr = NULL;
 	machine->nil->is_atom = true;
+
+	// Initialize the system functions character list
+	init_sys_function_list("car cdr cons eq? atom? quote if quit");
 
 	// Setup the evaluator code
 	// Stack-recursive
@@ -106,10 +110,60 @@ Lisp_Machine * init_machine() {
 	return machine;
 }
 
+// Creates an array with all the names of the system functions.
+// Expects a string containing all the function names
+// each seperated by some whitespace. Must have no whitespace 
+// surrounding the whole string
+void init_sys_function_list(char * funcs) {
+
+	int func_count = 1;
+	bool parsing_white_space = false;
+	for(int i = 0; i < strlen(funcs); ++i) {
+		if(funcs[i] == ' ' || funcs[i] == '\t') {
+			if(!parsing_white_space) {
+				++func_count;
+				parsing_white_space = true;
+			}
+		}
+		else {
+			parsing_white_space = false;
+		}
+	}
+
+	char (*memory_block)[SYS_FUNC_MAX_LENGTH + 1] = malloc(sizeof(char) * (SYS_FUNC_MAX_LENGTH + 1) * func_count);
+	char **sys_funcs = malloc(sizeof(char *) * func_count);
+
+	int func_index = 0;
+	int string_index = 0;
+	for(int i = 0; i < strlen(funcs); ++i) {
+		if(funcs[i] == ' ' || funcs[i] == '\t') {
+			if(!parsing_white_space) {
+				++func_index;
+				parsing_white_space = true;
+			}
+
+			string_index = 0;
+		}
+		else {
+			parsing_white_space = false;
+			memory_block[func_index][string_index] = funcs[i];
+			++string_index;
+		}
+	}
+
+	for(int i = 0; i < func_count; ++i) {
+		sys_funcs[i] = (char *)&memory_block[i];
+	}
+
+	machine->sys_func_memory_block = memory_block;
+	machine->sys_funcs = sys_funcs;
+}
+
 void destroy_machine(Lisp_Machine *machine) {
 
 	DESTROY_STACK(&(machine->sys_env_stack));
-	free(machine->free_mem);
+	free(machine->sys_funcs);
+	free(machine->memory_block);
 	free(machine);
 }
 

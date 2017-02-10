@@ -7,9 +7,21 @@
 
 	#define NUM_OF_CELLS 65536
 
+	#define SYS_FUNC_MAX_LENGTH 10
+
 	#define EVAL_CONTEXT_EVAL 0
 	#define EVAL_CONTEXT_EVLIS 1
 	#define EVAL_CONTEXT_CONENV 2
+
+	#define SYS_GENERAL 0
+	#define SYS_CAR 	1
+	#define SYS_CDR 	2
+	#define SYS_CONS 	3
+	#define SYS_EQ		4
+	#define SYS_ATOM 	5
+	#define SYS_IF 		6
+	#define SYS_QUOTE 	7
+	#define SYS_QUIT	8
 
 	extern int chars_per_pointer;
 
@@ -67,6 +79,7 @@
 
 	struct lisp_machine_t {
 		bool is_running;
+		Cell * memory_block;
 
 		int mem_used;
 		int mem_free;
@@ -95,6 +108,9 @@
 
 		Cell *lookup_var;
 		Cell *lookup_env;
+
+		void *sys_func_memory_block;
+		char **sys_funcs;
 	};
 
 	union Eval_Context_Frame {
@@ -109,6 +125,7 @@
 	};
 
 	Lisp_Machine * init_machine();
+	void init_sys_function_list(char * funcs);
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);
