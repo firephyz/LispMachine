@@ -13,15 +13,51 @@
 	#define EVAL_CONTEXT_EVLIS 1
 	#define EVAL_CONTEXT_CONENV 2
 
+	// General variable symbol
 	#define SYS_GENERAL 0
-	#define SYS_CAR 	1
-	#define SYS_CDR 	2
-	#define SYS_CONS 	3
-	#define SYS_EQ		4
-	#define SYS_ATOM 	5
-	#define SYS_IF 		6
-	#define SYS_QUOTE 	7
-	#define SYS_QUIT	8
+
+	// System instructions
+	#define SYS_SYM_CAR 	1
+	#define SYS_SYM_CDR 	2
+	#define SYS_SYM_CONS 	3
+	#define SYS_SYM_EQ		4
+	#define SYS_SYM_ATOM 	5
+	#define SYS_SYM_IF 		6
+	#define SYS_SYM_QUOTE 	7
+	#define SYS_SYM_QUIT	8
+
+	// Arguments to evaluation functions
+	// Has their own registers
+	#define SYS_ARG_APPLY_FUNC 		9
+	#define SYS_ARG_APPLY_ARGS 		10
+	#define SYS_ARG_APPLY_ENV 		11
+	#define SYS_ARG_EVIF_PRED 		12
+	#define SYS_ARG_EVIF_THEN 		13
+	#define SYS_ARG_EVIF_ELSE 		14
+	#define SYS_ARG_EVIF_ENV 		15
+	#define SYS_ARG_LOOKUP_VAR 		16
+	#define SYS_ARG_LOOKUP_ENV 		17
+	// These are kept in the sytem stack
+	#define SYS_ARG_EVAL_EXP		18
+	#define SYS_ARG_EVAL_ENV		19
+	#define SYS_ARG_EVLIS_ARGS		20
+	#define SYS_ARG_EVLIS_ENV		21
+	#define SYS_ARG_CONENV_VARS		22
+	#define SYS_ARG_CONENV_ARGS		23
+	#define SYS_ARG_CONENV_ENV		24
+
+	// Evaluation functions
+	#define SYS_FUNC_EVAL			25
+	#define SYS_FUNC_APPLY			26
+	#define SYS_FUNC_EVLIS			27
+	#define SYS_FUNC_EVIF			28
+	#define SYS_FUNC_CONENV			29
+	#define SYS_FUNC_LOOKUP			30
+
+	// Other reserved symbols
+	#define SYS_SYM_NULL			32
+	#define SYS_SYM_FALSE			33
+	#define SYS_SYM_TRUE			34
 
 	extern int chars_per_pointer;
 
@@ -81,11 +117,13 @@
 		bool is_running;
 		Cell * memory_block;
 
+		// System memory info
 		int mem_used;
 		int mem_free;
 		Cell *free_mem;
 		Cell *nil;
 
+		// Evaluation functions
 		// $[func]
 		Cell * sys_eval;
 		Cell * sys_apply;
@@ -95,6 +133,7 @@
 		Cell * sys_lookup;
 
 		// System environment
+		// This serve as registers to hold the arguments to the evaluation functions
 		Stack sys_env_stack;
 
 		Cell *apply_func;
@@ -109,8 +148,10 @@
 		Cell *lookup_var;
 		Cell *lookup_env;
 
-		void *sys_func_memory_block;
-		char **sys_funcs;
+		int num_of_sys_funcs;
+		void *sys_func_memory_block;	// The actual memory supporting the variable sys_funcs.
+		char **sys_funcs;				// Holds the list of supported system functions in alphabetical order.
+		uint8_t *sys_func_types;			// Once we find a symbol matching a function in sys_funcs, we return its corresponding type
 	};
 
 	union Eval_Context_Frame {

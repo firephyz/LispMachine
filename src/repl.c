@@ -1,8 +1,11 @@
 /* To-Do
  *
- * Implement the following functions: car, cdr, cons, eq?, atom?, quote, lambda, cond
+ * Change machine->nil to actually reside in the system memory instead
+ * of it's own special register.
  *
+ * Implement the various symbol types required to support system execution.
  *
+ * Fix the make_expression function so that there is less redundancy in code (and make for elegant)
  */
 
 

@@ -36,7 +36,7 @@ Lisp_Machine * init_machine() {
 	machine->nil->is_atom = true;
 
 	// Initialize the system functions character list
-	init_sys_function_list("car cdr cons eq? atom? quote if quit");
+	init_sys_function_list("atom? car cdr cons eq? if quit quote");
 
 	// Setup the evaluator code
 	// Stack-recursive
@@ -132,6 +132,7 @@ void init_sys_function_list(char * funcs) {
 
 	char (*memory_block)[SYS_FUNC_MAX_LENGTH + 1] = malloc(sizeof(char) * (SYS_FUNC_MAX_LENGTH + 1) * func_count);
 	char **sys_funcs = malloc(sizeof(char *) * func_count);
+	uint8_t *sys_func_types = malloc(sizeof(uint8_t) * func_count);
 
 	int func_index = 0;
 	int string_index = 0;
@@ -157,13 +158,19 @@ void init_sys_function_list(char * funcs) {
 
 	machine->sys_func_memory_block = memory_block;
 	machine->sys_funcs = sys_funcs;
+	machine->num_of_sys_funcs = func_count;
+	machine->sys_func_types = sys_func_types;
+
+	sys_func_types[0] = SYS_CAR;
 }
 
 void destroy_machine(Lisp_Machine *machine) {
 
 	DESTROY_STACK(&(machine->sys_env_stack));
+	free(machine->sys_func_memory_block);
 	free(machine->sys_funcs);
 	free(machine->memory_block);
+	free(machine->nil);
 	free(machine);
 }
 

@@ -7,7 +7,11 @@
 #include <limits.h>
 #include <stdint.h>
 
-Cell * make_expression(char *expr) {
+Lisp_Machine * machine;
+
+// @expr_type - Used to tell the make_symbol function what expression we are evaluating (eval, apply, evlis, etc...)
+//					This is important when determining symbol types for system function arguments.
+Cell * make_expression(char *expr, uint8_t expr_type) {
 
 	Stack s;
 	MAKE_STACK(s, Cell *);
@@ -55,7 +59,7 @@ Cell * make_expression(char *expr) {
 				break;
 			default:
 				if(cell->car == NULL) {
-					cell->car = make_symbol(token);
+					cell->car = make_symbol(token, expr_type);
 					token = tokenizer_next(tk);
 				}
 				else {
@@ -140,6 +144,7 @@ char * tokenizer_next(Tokenizer * tk) {
 	}
 }
 
+// Finds the index of the closest char in @targets
 int index_of(char * string, char * targets) {
 
 	int target_length = strlen(targets);
@@ -155,9 +160,10 @@ int index_of(char * string, char * targets) {
 	return -1;
 }
 
-Cell * make_symbol(char * name) {
+// See make_expression function to understand the purpose of @expr_type
+Cell * make_symbol(char * name, uint8_t expr_type) {
 
-	uint8_t cell_type = determine_cell_type(name);
+	uint8_t cell_type = determine_cell_type(name, expr_type);
 
 	Cell * result;
 	Cell * prev_cell;
@@ -199,13 +205,64 @@ Cell * make_symbol(char * name) {
 	return result;
 }
 
-uint8_t determine_cell_type(char *name) {
+// If the symbol starts with a $, it's a system function.
+// We then erforms a binary search on the alphabetically sorted function names in
+// machine->sys_funcs, thereby determining the type of the given symbol.
+// See make_expression symbol to understand @expr_type
+uint8_t determine_cell_type(char *name, uint8_t expr_type) {
 
 	uint8_t result = SYS_GENERAL;
 
-	
+	switch(name[0]) {
+		case '$':
+			char func_name[strlen(name) - 3 + 1];
+			strcpy(func_name, name + 2);
+			result = determine_system_func(func_name);
+			break;
+		case '@':
+			char arg_name[strlen(name) - 3 + 1];
+			strcpy(arg_name, name + 2);
+			result = determine_system_arg(arg_name, expr_type);
+			break;
+		default:
+			break;
+	}
 
 	return result;
+}
+
+uint8_t determine_system_func(char * name) {
+
+	int func_index = machine->num_of_sys_funcs / 2;
+	int word_index = 0;
+
+	char * func_name = machine->sys_funcs[func_index];
+	char character = func_name[word_index];
+	if(name[0] > character) {
+
+	}
+	else if (name[0] < character) {
+
+	}
+	else {
+		++word_index;
+
+		if(word_index == strlen(func_name)) {
+			// The given name is longer than the potential match, we don't have a match.
+			if(strlen(name) > word_index) {
+				fprintf(stederr, "Invalid system function name: $[%s]", name);
+				exit(EXIT_FAILURE);
+			}
+			// We have matched the given name to a system function
+			else {
+				return sys_func_types[func_index];
+			}
+		}
+	}
+}
+
+uint8_t determine_system_arg(char * arg, uint8_t expr_type) {
+
 }
 
 char * get_symbol_name(Cell * sym) {

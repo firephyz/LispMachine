@@ -4,6 +4,8 @@
 	#include "lisp_machine.h"
 	#include <stdint.h>
 
+	extern Lisp_Machine * machine;
+
 	typedef struct tokenizer_t {
 		char * string;
 		int string_length;
@@ -12,11 +14,13 @@
 		char * token;
 	} Tokenizer;
 
-	Cell * make_expression(char *expr);
+	Cell * make_expression(char *expr, uint8_t expr_type);
 	int index_of(char * string, char * targets);
-	Cell * make_symbol(char * name);
+	Cell * make_symbol(char * name, uint8_t expr_type);
 	char * get_symbol_name(Cell * sym);
 	uint8_t determine_cell_type(char *name);
+	uint8_t determine_system_func(char * name);
+	uint8_t determine_system_arg(char * name, uint8_t expr_type)
 
 	Tokenizer * make_tokenizer(char * string);
 	void destroy_tokenizer(Tokenizer * tk);
