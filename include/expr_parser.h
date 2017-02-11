@@ -18,9 +18,10 @@
 	int index_of(char * string, char * targets);
 	Cell * make_symbol(char * name, uint8_t expr_type);
 	char * get_symbol_name(Cell * sym);
-	uint8_t determine_cell_type(char *name);
-	uint8_t determine_system_func(char * name);
-	uint8_t determine_system_arg(char * name, uint8_t expr_type)
+	uint8_t determine_cell_type(char *name, uint8_t expr_type);
+	uint8_t determine_symbol_type(char * name);
+	uint8_t determine_eval_func(char * name);
+	uint8_t determine_eval_arg(char * name, uint8_t expr_type);
 
 	Tokenizer * make_tokenizer(char * string);
 	void destroy_tokenizer(Tokenizer * tk);

@@ -7,7 +7,7 @@
 
 	#define NUM_OF_CELLS 65536
 
-	#define SYS_FUNC_MAX_LENGTH 10
+	#define INSTR_MAX_LENGTH 10
 
 	#define EVAL_CONTEXT_EVAL 0
 	#define EVAL_CONTEXT_EVLIS 1
@@ -38,7 +38,7 @@
 	#define SYS_ARG_LOOKUP_VAR 		16
 	#define SYS_ARG_LOOKUP_ENV 		17
 	// These are kept in the sytem stack
-	#define SYS_ARG_EVAL_EXP		18
+	#define SYS_ARG_EVAL_EXPR		18
 	#define SYS_ARG_EVAL_ENV		19
 	#define SYS_ARG_EVLIS_ARGS		20
 	#define SYS_ARG_EVLIS_ENV		21
@@ -148,10 +148,10 @@
 		Cell *lookup_var;
 		Cell *lookup_env;
 
-		int num_of_sys_funcs;
-		void *sys_func_memory_block;	// The actual memory supporting the variable sys_funcs.
-		char **sys_funcs;				// Holds the list of supported system functions in alphabetical order.
-		uint8_t *sys_func_types;			// Once we find a symbol matching a function in sys_funcs, we return its corresponding type
+		int num_of_instrs;
+		void *instr_memory_block;	// The actual memory supporting the variable instructions.
+		char **instructions;				// Holds the list of supported instructions in alphabetical order.
+		uint8_t *instr_types;			// Once we find a symbol matching a function, we return its corresponding type
 	};
 
 	union Eval_Context_Frame {
@@ -166,7 +166,7 @@
 	};
 
 	Lisp_Machine * init_machine();
-	void init_sys_function_list(char * funcs);
+	void init_instr_list(char * funcs);
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);

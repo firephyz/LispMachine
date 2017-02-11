@@ -2,6 +2,7 @@
 #include "lisp_machine.h"
 #include "repl.h"
 #include "stack.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -129,7 +130,7 @@ char * tokenizer_next(Tokenizer * tk) {
 			++tk->index;
 			return tokenizer_next(tk);
 		default:;
-			int symbol_length = index_of(tk->string + tk->index, " ()");
+			int symbol_length = index_of(tk->string + tk->index, "\t ()");
 
 			if(symbol_length + 1 > tk->max_token_size) {
 				tk->token = realloc(tk->token, tk->max_token_size * 2);
@@ -212,57 +213,180 @@ Cell * make_symbol(char * name, uint8_t expr_type) {
 uint8_t determine_cell_type(char *name, uint8_t expr_type) {
 
 	uint8_t result = SYS_GENERAL;
+	char symbol_name[strlen(name) - 3 + 1];
 
 	switch(name[0]) {
 		case '$':
-			char func_name[strlen(name) - 3 + 1];
-			strcpy(func_name, name + 2);
-			result = determine_system_func(func_name);
+			strcpy(symbol_name, name + 2);
+			result = determine_eval_func(symbol_name);
 			break;
 		case '@':
-			char arg_name[strlen(name) - 3 + 1];
-			strcpy(arg_name, name + 2);
-			result = determine_system_arg(arg_name, expr_type);
+			strcpy(symbol_name, name + 2);
+			result = determine_eval_arg(symbol_name, expr_type);
 			break;
 		default:
+			result = determine_symbol_type(name);
 			break;
 	}
 
 	return result;
 }
 
-uint8_t determine_system_func(char * name) {
+// Performs a binary search on the strings in machine->instructions to locate
+// a machine instruction.
+uint8_t determine_symbol_type(char * name) {
 
-	int func_index = machine->num_of_sys_funcs / 2;
+	uint8_t result = SYS_GENERAL;
+
+	int low_index = 0;
+	int high_index = machine->num_of_instrs - 1;
+	int mid_index = (high_index - low_index) / 2;
+
 	int word_index = 0;
 
-	char * func_name = machine->sys_funcs[func_index];
-	char character = func_name[word_index];
-	if(name[0] > character) {
+	while(1) {
+		char * func_name = machine->instructions[mid_index];
 
-	}
-	else if (name[0] < character) {
+		while(1) {
+			char character = func_name[word_index];
+			if(name[word_index] > character) {
+				// If this condition is true, then the requested symbol
+				// isn't present in the list. It must be a general variable.
+				if(mid_index + 1 == low_index) {
+					return SYS_GENERAL;
+				}
 
-	}
-	else {
-		++word_index;
-
-		if(word_index == strlen(func_name)) {
-			// The given name is longer than the potential match, we don't have a match.
-			if(strlen(name) > word_index) {
-				fprintf(stederr, "Invalid system function name: $[%s]", name);
-				exit(EXIT_FAILURE);
+				low_index = mid_index + 1;
+				mid_index = (high_index + low_index) / 2;
+				word_index = 0;
+				break;
 			}
-			// We have matched the given name to a system function
+			else if (name[word_index] < character) {
+				// If this condition is true, then the requested symbol
+				// isn't present in the list. It must be a general variable.
+				if(mid_index - 1 == high_index) {
+					return SYS_GENERAL;
+				}
+
+				high_index = mid_index - 1;
+				mid_index = (high_index + low_index) / 2;
+				word_index = 0;
+				break;
+			}
 			else {
-				return sys_func_types[func_index];
+				++word_index;
+
+				if(word_index == strlen(func_name)) {
+					// The given name is longer than the potential match, we don't have a match.
+					if(strlen(name) > word_index) {
+						// Mark this is a generic symbol to be looked up in the environment
+						return SYS_GENERAL;
+					}
+					// We have matched the given name to a system function
+					else {
+						return machine->instr_types[mid_index];
+					}
+				}
 			}
 		}
 	}
+
+	return result;
 }
 
-uint8_t determine_system_arg(char * arg, uint8_t expr_type) {
+// Distiguishes between eval, apply, evlis, evif, conenv, lookup
+uint8_t determine_eval_func(char * name) {
 
+	switch(name[0]) {
+		case 'e':
+			switch(name[2]) {
+				case 'a':
+					return SYS_FUNC_EVAL;
+				case 'l':
+					return SYS_FUNC_EVLIS;
+				case 'i':
+					return SYS_FUNC_EVIF;
+				default:
+					fprintf(stderr, "No evaluation function match found for %s.\n", name);
+					exit(EXIT_FAILURE);
+			}
+		case 'a':
+			return SYS_FUNC_APPLY;
+		case 'c':
+			return SYS_FUNC_CONENV;
+		case 'l':
+			return SYS_FUNC_LOOKUP;
+		default:
+			fprintf(stderr, "No evaluation function match found for %s.\n", name);
+			exit(EXIT_FAILURE);
+	}
+
+	// Shut up compiler
+	return 0;
+}
+
+uint8_t determine_eval_arg(char * arg, uint8_t expr_type) {
+
+	switch(expr_type) {
+		case SYS_FUNC_EVAL:
+			if(arg[1] == 'x') {
+				return SYS_ARG_EVAL_EXPR;
+			}
+			else if (arg[1] == 'n') {
+				return SYS_ARG_EVAL_ENV;
+			}
+		case SYS_FUNC_APPLY:
+			if(arg[0] == 'f') {
+				return SYS_ARG_APPLY_FUNC;
+			}
+			else if (arg[0] == 'a') {
+				return SYS_ARG_APPLY_ARGS;
+			}
+			else if (arg[0] == 'e') {
+				return SYS_ARG_APPLY_ENV;
+			}
+		case SYS_FUNC_EVLIS:
+			if(arg[0] == 'a') {
+				return SYS_ARG_EVLIS_ARGS;
+			}
+			else if (arg[0] == 'e') {
+				return SYS_ARG_EVLIS_ENV;
+			}
+		case SYS_FUNC_EVIF:
+			switch(arg[1]) {
+				case 'r':
+					return SYS_ARG_EVIF_PRED;
+				case 'h':
+					return SYS_ARG_EVIF_THEN;
+				case 'l':
+					return SYS_ARG_EVIF_ELSE;
+				case 'n':
+					return SYS_ARG_EVIF_ENV;
+			}
+		case SYS_FUNC_CONENV:
+			if(arg[0] == 'v') {
+				return SYS_ARG_CONENV_VARS;
+			}
+			else if (arg[0] == 'a') {
+				return SYS_ARG_CONENV_ARGS;
+			}
+			else if (arg[0] == 'e') {
+				return SYS_ARG_CONENV_ENV;
+			}
+		case SYS_FUNC_LOOKUP:
+			if(arg[0] == 'v') {
+				return SYS_ARG_LOOKUP_VAR;
+			}
+			else if (arg[0] == 'e') {
+				return SYS_ARG_LOOKUP_ENV;
+			}
+		default:
+			fprintf(stderr, "Invalid system evaluation type %d.\n", expr_type);
+			exit(EXIT_FAILURE);
+	}
+
+	// Shut up compiler
+	return 0;
 }
 
 char * get_symbol_name(Cell * sym) {

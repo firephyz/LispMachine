@@ -35,8 +35,10 @@ Lisp_Machine * init_machine() {
 	machine->nil->cdr = NULL;
 	machine->nil->is_atom = true;
 
-	// Initialize the system functions character list
-	init_sys_function_list("atom? car cdr cons eq? if quit quote");
+	// Initialize the supported instruction lists
+	// null, false and true are pseudo system symbols. They get
+	// translated to something else during parsing
+	init_instr_list("atom? car cdr cons eq? false if null quit quote true");
 
 	// Setup the evaluator code
 	// Stack-recursive
@@ -54,7 +56,7 @@ Lisp_Machine * init_machine() {
                         @[expr] 									\
                         ($[apply] (car @[expr])						\
                                   ($[evlis] (cdr @[expr]) @[env])	\
-                                  @[env])))))");
+                                  @[env])))))", SYS_FUNC_EVAL);
 	// Tail-recursive
 	machine->sys_apply = make_expression("							\
 		(if (atom? @[func])											\
@@ -74,31 +76,31 @@ Lisp_Machine * init_machine() {
             ($[eval] (car (cdr (cdr @[func])))						\
                      ($[conenv] (car (cdr @[func]))					\
                                 @[args]								\
-                                @[env])))");
+                                @[env])))", SYS_FUNC_APPLY);
     // Stack-recursive
 	machine->sys_evlis = make_expression("							\
-		(if (eq? @[args] @[null])									\
-            @[null]													\
+		(if (eq? @[args] null)										\
+            null													\
             (cons ($[eval] (car @[args]) @[env])					\
-                  ($[evlis] (cdr @[args]) @[env])))");
+                  ($[evlis] (cdr @[args]) @[env])))", SYS_FUNC_EVLIS);
 	// Non-recursive
 	machine->sys_evif = make_expression("							\
 		(if ($[eval] @[pred] @[env])								\
             ($[eval] @[then] @[env])								\
-            ($[eval] @[else] @[env]))");
+            ($[eval] @[else] @[env]))", SYS_FUNC_EVIF);
 	// Stack-recursive
 	machine->sys_conenv = make_expression("							\
-		(if (eq? @[vars] @[null])									\
+		(if (eq? @[vars] null)										\
             @[env]													\
             (cons (cons (car @[vars]) (car @[args]))				\
                   ($[conenv] (cdr @[vars])							\
                              (cdr @[args])							\
-                             @[env])))");
+                             @[env])))", SYS_FUNC_CONENV);
 	// tail-recursive
 	machine->sys_lookup = make_expression("							\
 		(if (eq? (car (car @[env])) @[var])							\
             (cdr (car @[env]))										\
-            ($[lookup] @[var] (cdr @[env])))");
+            ($[lookup] @[var] (cdr @[env])))", SYS_FUNC_LOOKUP);
 
 	// Initialize the machine system environment
 	MAKE_STACK(machine->sys_env_stack, Eval_Context);
@@ -114,7 +116,7 @@ Lisp_Machine * init_machine() {
 // Expects a string containing all the function names
 // each seperated by some whitespace. Must have no whitespace 
 // surrounding the whole string
-void init_sys_function_list(char * funcs) {
+void init_instr_list(char * funcs) {
 
 	int func_count = 1;
 	bool parsing_white_space = false;
@@ -130,9 +132,9 @@ void init_sys_function_list(char * funcs) {
 		}
 	}
 
-	char (*memory_block)[SYS_FUNC_MAX_LENGTH + 1] = malloc(sizeof(char) * (SYS_FUNC_MAX_LENGTH + 1) * func_count);
-	char **sys_funcs = malloc(sizeof(char *) * func_count);
-	uint8_t *sys_func_types = malloc(sizeof(uint8_t) * func_count);
+	char (*memory_block)[INSTR_MAX_LENGTH + 1] = malloc(sizeof(char) * (INSTR_MAX_LENGTH + 1) * func_count);
+	char **instructions = malloc(sizeof(char *) * func_count);
+	uint8_t *instr_types = malloc(sizeof(uint8_t) * func_count);
 
 	int func_index = 0;
 	int string_index = 0;
@@ -153,22 +155,33 @@ void init_sys_function_list(char * funcs) {
 	}
 
 	for(int i = 0; i < func_count; ++i) {
-		sys_funcs[i] = (char *)&memory_block[i];
+		instructions[i] = (char *)&memory_block[i];
 	}
 
-	machine->sys_func_memory_block = memory_block;
-	machine->sys_funcs = sys_funcs;
-	machine->num_of_sys_funcs = func_count;
-	machine->sys_func_types = sys_func_types;
+	machine->instr_memory_block = memory_block;
+	machine->instructions = instructions;
+	machine->num_of_instrs = func_count;
+	machine->instr_types = instr_types;
 
-	sys_func_types[0] = SYS_CAR;
+	instr_types[0] = SYS_SYM_ATOM;
+	instr_types[1] = SYS_SYM_CAR;
+	instr_types[2] = SYS_SYM_CDR;
+	instr_types[3] = SYS_SYM_CONS;
+	instr_types[4] = SYS_SYM_EQ;
+	instr_types[5] = SYS_SYM_FALSE;
+	instr_types[6] = SYS_SYM_IF;
+	instr_types[7] = SYS_SYM_NULL;
+	instr_types[8] = SYS_SYM_QUIT;
+	instr_types[9] = SYS_SYM_QUOTE;
+	instr_types[10] = SYS_SYM_TRUE;
 }
 
 void destroy_machine(Lisp_Machine *machine) {
 
 	DESTROY_STACK(&(machine->sys_env_stack));
-	free(machine->sys_func_memory_block);
-	free(machine->sys_funcs);
+	free(machine->instr_types);
+	free(machine->instr_memory_block);
+	free(machine->instructions);
 	free(machine->memory_block);
 	free(machine->nil);
 	free(machine);
