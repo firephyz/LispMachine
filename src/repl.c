@@ -43,7 +43,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Begin execution of the machine
-	execute(machine);
+	execute();
 
 	destroy_machine(machine);
 }

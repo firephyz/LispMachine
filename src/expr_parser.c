@@ -20,7 +20,7 @@ Cell * make_expression(char *expr, uint8_t expr_type) {
 	Cell root = {NULL, '\0', NULL, false, 0};
 	Cell * cell = &root;
 
-	Tokenizer * tk = make_tokenizer(expr + 1);
+	Tokenizer * tk = make_tokenizer(exprn);
 	char * token = tokenizer_next(tk);
 	while(token != NULL) {
 		switch(token[0]) {

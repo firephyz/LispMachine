@@ -63,7 +63,6 @@
 
 	typedef struct cell_t Cell;
 	typedef struct lisp_machine_t Lisp_Machine;
-	typedef struct eval_context_t Eval_Context;
 
 	struct cell_t {
 		Cell *car;
@@ -123,6 +122,9 @@
 		Cell *free_mem;
 		Cell *nil;
 
+		// Marks where the machine is in execution of the evaluation functions
+		Cell * program;
+
 		// Evaluation functions
 		// $[func]
 		Cell * sys_eval;
@@ -134,7 +136,7 @@
 
 		// System environment
 		// This serve as registers to hold the arguments to the evaluation functions
-		Stack sys_env_stack;
+		Cell * sys_env_stack;
 
 		Cell *apply_func;
 		Cell *apply_args;
@@ -154,23 +156,13 @@
 		uint8_t *instr_types;			// Once we find a symbol matching a function, we return its corresponding type
 	};
 
-	union Eval_Context_Frame {
-		Cell *eval_args[2];
-		Cell *evlis_args[2];
-		Cell *conenv_args[3];
-	};
-
-	struct eval_context_t {
-		int func;
-		union Eval_Context_Frame frame;
-	};
-
 	Lisp_Machine * init_machine();
 	void init_instr_list(char * funcs);
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);
-	void execute(Lisp_Machine * lm);
+	Cell * push_args(Cell * arg1, Cell * arg2, Cell * arg3);
+	void execute();
 
 	Cell * car(Cell * cell);
 	Cell * cdr(Cell * cell);

@@ -103,7 +103,35 @@ Lisp_Machine * init_machine() {
             ($[lookup] @[var] (cdr @[env])))", SYS_FUNC_LOOKUP);
 
 	// Initialize the machine system environment
-	MAKE_STACK(machine->sys_env_stack, Eval_Context);
+	machine->sys_env_stack = get_free_cell();
+	machine->sys_env_stack->cdr = machine->nil;
+	Cell * expr = make_expression("(quote a)", 0);
+	Cell * env = make_expression("()", 0);
+	machine->sys_env_stack->car = push_args(expr, env, NULL);
+
+	machine->apply_func = get_free_cell();
+	machine->apply_func->cdr = machine->nil;
+	machine->apply_args = get_free_cell();
+	machine->apply_args->cdr = machine->nil;
+	machine->apply_env = get_free_cell();
+	machine->apply_env->cdr = machine->nil;
+
+	machine->evif_pred = get_free_cell();
+	machine->evif_pred->cdr = machine->nil;
+	machine->evif_then = get_free_cell();
+	machine->evif_then->cdr = machine->nil;
+	machine->evif_else = get_free_cell();
+	machine->evif_else->cdr = machine->nil;
+	machine->evif_env = get_free_cell();
+	machine->evif_env->cdr = machine->nil;
+
+	machine->lookup_var = get_free_cell();
+	machine->lookup_var->cdr = machine->nil;
+	machine->lookup_env = get_free_cell();
+	machine->lookup_env->cdr = machine->nil;
+
+	// Prepare machine for execution
+	machine->program = machine->sys_eval;
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -176,9 +204,27 @@ void init_instr_list(char * funcs) {
 	instr_types[10] = SYS_SYM_TRUE;
 }
 
+Cell * push_args(Cell * arg1, Cell * arg2, Cell * arg3) {
+	
+	Cell * result = get_free_cell();
+	result->car = arg1;
+	result->cdr = get_free_cell();
+	result->cdr->car = arg2;
+
+	if(arg3 == NULL) {
+		result->cdr->cdr = machine->nil;
+	}
+	else {
+		result->cdr->cdr = get_free_cell();
+		result->cdr->cdr->car = arg3;
+		result->cdr->cdr->cdr = machine->nil;
+	}
+
+	return result;
+}
+
 void destroy_machine(Lisp_Machine *machine) {
 
-	DESTROY_STACK(&(machine->sys_env_stack));
 	free(machine->instr_types);
 	free(machine->instr_memory_block);
 	free(machine->instructions);
@@ -204,14 +250,25 @@ void store_cell(Cell * cell) {
 	machine->free_mem = cell;
 }
 
-void execute(Lisp_Machine * lm) {
-
-	Cell * cell = lm->nil;
+void execute() {
 
 	while(machine->is_running) {
-		switch(cell->type) {
+		switch(machine->program->car->type) {
+			SYS_SYM_CAR:
+			SYS_SYM_CDR:
+			SYS_SYM_CONS:
+			SYS_SYM_EQ:
+			SYS_SYM_ATOM:
+			SYS_SYM_QUOTE:
+			SYS_SYM_IF:
+			SYS_SYM_QUIT:
+			SYS_FUNC_EVAL:
+			SYS_FUNC_APPLY:
+			SYS_FUNC_EVLIS:
+			SYS_FUNC_EVIF:
+			SYS_FUNC_CONENV:
+			SYS_FUNC_LOOKUP:
 			default:
-				break;
 		}
 	}
 }
