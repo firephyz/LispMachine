@@ -14,9 +14,9 @@
 		char * token;
 	} Tokenizer;
 
-	Cell * make_expression(char *expr, uint8_t expr_type);
+	Cell * make_expression(char *expr);
 	int index_of(char * string, char * targets);
-	Cell * make_symbol(char * name, uint8_t expr_type);
+	Cell * make_symbol(char * name);
 	char * get_symbol_name(Cell * sym);
 	uint8_t determine_symbol_type(char * name);
 

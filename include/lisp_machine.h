@@ -26,6 +26,15 @@
 	#define SYS_SYM_QUOTE	11
 	#define SYS_SYM_TRUE	12
 
+	// Used for machine.calling_func so that functions know where to return.
+	#define SYS_EVAL 		0
+	#define SYS_APPLY		1
+	#define SYS_EVLIS		2
+	#define SYS_EVIF		3
+	#define SYS_CONENV		4
+	#define SYS_LOOKUP		5
+	#define SYS_REPL		6
+
 	extern int chars_per_pointer;
 
 	typedef struct cell_t Cell;
@@ -94,6 +103,13 @@
 		Cell * sys_stack;
 		int sys_stack_size;
 
+		// Small, one context sized stack, that holds all the args necessary
+		// for a system evaluation function to execute.
+		Cell * current_args;
+		// Holds the result from the last evaluation
+		Cell * result;
+		int calling_func;
+
 
 		int num_of_instrs;
 		void *instr_memory_block;	// The actual memory supporting the variable instructions.
@@ -105,10 +121,8 @@
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);
-	Cell * push_args(int arg_count, ...);
+	Cell * push_system_args(Cell * stack, int arg_count, ...);
 	void execute();
-
-	Cell * sys_eval(Cell * expr, Cell * env);
 
 	Cell * car(Cell * cell);
 	Cell * cdr(Cell * cell);

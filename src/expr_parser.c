@@ -12,7 +12,7 @@ Lisp_Machine * machine;
 
 // @expr_type - Used to tell the make_symbol function what expression we are evaluating (eval, apply, evlis, etc...)
 //					This is important when determining symbol types for system function arguments.
-Cell * make_expression(char *expr, uint8_t expr_type) {
+Cell * make_expression(char *expr) {
 
 	Stack s;
 	MAKE_STACK(s, Cell *);
@@ -60,7 +60,7 @@ Cell * make_expression(char *expr, uint8_t expr_type) {
 				break;
 			default:
 				if(cell->car == NULL) {
-					cell->car = make_symbol(token, expr_type);
+					cell->car = make_symbol(token);
 					token = tokenizer_next(tk);
 				}
 				else {
@@ -162,7 +162,7 @@ int index_of(char * string, char * targets) {
 }
 
 // See make_expression function to understand the purpose of @expr_type
-Cell * make_symbol(char * name, uint8_t expr_type) {
+Cell * make_symbol(char * name) {
 
 	uint8_t cell_type = determine_symbol_type(name);
 

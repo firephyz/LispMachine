@@ -31,7 +31,7 @@ Lisp_Machine * init_machine() {
 	}
 
 	// Setup the nil atom
-	machine->nil = malloc(sizeof(Cell));
+	machine->nil = get_free_cell();
 	machine->nil->car = NULL;
 	machine->nil->cdr = NULL;
 	machine->nil->is_atom = true;
@@ -42,12 +42,8 @@ Lisp_Machine * init_machine() {
 	init_instr_list("atom? car cdr cons eq? false if lambda null quit quote true");
 
 	// Initialize the machine system environment
-	machine->sys_stack = get_free_cell();
-	machine->sys_stack->cdr = machine->nil;
-	Cell * expr = make_expression("(quote a)", 0);
-	Cell * env = make_expression("()", 0);
-	machine->sys_stack_size = 1;
-	machine->sys_stack->car = push_args(2, expr, env);
+	machine->sys_stack = machine->nil;
+	machine->sys_stack_size = 0;
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -106,27 +102,20 @@ void init_instr_list(char * funcs) {
 	machine->num_of_instrs = func_count;
 }
 
-Cell * push_args(int arg_count, ...) {
-	
-	Cell * result = get_free_cell();
-	Cell * cell = result;
+Cell * push_system_args(Cell * stack, int arg_count, ...) {
 
 	va_list args;
 	va_start(args, arg_count);
 
 	for(int i = 0; i < arg_count; ++i) {
+		Cell * cell = get_free_cell();
 		cell->car = va_arg(args, Cell *);
-
-		if(i + 1 < arg_count) {
-			cell->cdr = get_free_cell();
-			cell = cell->cdr;
-		}
-		else {
-			cell->cdr = machine->nil;
-		}
+		cell->cdr = stack;
+		++machine->sys_stack_size;
+		stack = cell;
 	}
 
-	return result;
+	return stack;
 }
 
 void destroy_machine(Lisp_Machine *machine) {
@@ -134,7 +123,6 @@ void destroy_machine(Lisp_Machine *machine) {
 	free(machine->instr_memory_block);
 	free(machine->instructions);
 	free(machine->memory_block);
-	free(machine->nil);
 	free(machine);
 }
 
@@ -155,17 +143,108 @@ void store_cell(Cell * cell) {
 	machine->free_mem = cell;
 }
 
+// Implements the various system evalution functions using gotos so that
+// we don't use the normal stack with normal function calls. We must use
+// our own machine stack built from cons cells.
 void execute() {
 
-	while(machine->is_running) {
-		if(machine->sys_stack_size != 0) {
-//			sys_eval(machine->sys_env_stack->car->car, machine->sys_env_stack->car->cdr)
+	Cell * code = make_expression("(quote a)");
+	Cell * environment = make_expression("()");
+	machine->current_args = push_system_args(machine->nil, 2, code, environment);
+
+	// Used at temporary storage of current_args variables so that we
+	// don't have to car and cdr so much. Might not be used
+	// in actual hardware implementation.
+	Cell * arg0;
+	Cell * arg1;
+	Cell * arg2;
+	Cell * arg3;
+
+sys_eval:
+	arg0 = machine->current_args->car;
+	arg1 = machine->current_args->cdr->car;
+
+	if(arg0->is_atom) {
+		goto sys_lookup;
+	}
+	else {
+		switch(arg0->car->type) {
+			case SYS_SYM_IF:
+				machine->current_args = push_system_args(
+					machine->nil,
+					4, 
+					arg0->cdr->car, 
+					arg0->cdr->cdr->car, 
+					arg0->cdr->cdr->cdr->car, 
+					arg1);
+				goto sys_evif;
+			case SYS_SYM_LAMBDA:
+				machine->result = arg0;
+				break;
+			case SYS_SYM_QUOTE:
+				machine->result = arg0->cdr->car;
+				break;
+			default:
+				// Push args for later access
+				machine->sys_stack = push_system_args(machine->sys_stack, 2, arg0, arg1);
+				// Set up the args for sys_evlis
+				machine->current_args = push_system_args(machine->nil, 2, arg0->cdr, arg1);
+				// Evaluate the function args
+				goto sys_evlis;
+sys_eval_evlis_continue:
+				// Set up args for sys_apply
+				machine->current_args = push_system_args(machine->nil, 3, machine->sys_stack->car->car, machine->result, machine->sys_stack->cdr->car);
+				// Pop the stack
+				machine->sys_stack = machine->sys_stack->cdr->cdr;
+				goto sys_apply;
 		}
 	}
-}
 
-Cell * sys_eval(Cell * expr, Cell * env) {
+	// Return from sys_eval
+sys_eval_return:
+	switch(machine->calling_func) {
+		case SYS_EVAL:;
+		case SYS_APPLY:;
+		case SYS_EVLIS:;
+		case SYS_EVIF:;
+		case SYS_CONENV:;
+		case SYS_LOOKUP:;
+		case SYS_REPL:;
+		default:;
+	}
 
+sys_apply:
+sys_evlis:
+
+	arg0 = machine->current_args->car;
+	arg1 = machine->current_args->cdr->car;
+
+	if(arg0 == machine->nil) {
+		machine->result = machine->nil;
+	}
+	else {
+		machine->sys_stack = push_system_args(machine->sys_stack, 2, arg0, arg1);
+		machine->current_args = push_system_args(machine->nil, 2, arg0->car, arg1);
+		goto sys_eval;
+sys_evlis_eval_continue:
+		machine->sys_stack = push_system_args(machine->sys_stack, 1, machine->result);
+		machine->current_args = push_system_args(machine->nil, 2, machine->sys_stack->cdr->car->cdr, machine->sys_stack->cdr->cdr->car);
+		goto sys_evlis;
+sys_evlis_evlis_continue:
+		machine->result = cons(machine->sys_stack->car, machine->result);
+		machine->sys_stack = machine->sys_stack->cdr->cdr->cdr;
+	}
+
+	// switch(machine->)
+
+// (define evlis
+//   (lambda (args env)
+//     (if (eq? args (quote ()))
+//         '()
+//         (cons (eval (car args) env)
+//               (evlis (cdr args) env)))))
+sys_evif:;
+sys_lookup:;
 }
 
 /*
