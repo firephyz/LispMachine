@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 int chars_per_pointer = sizeof(uintptr_t) / sizeof(char);
 bool verbose_flag;
@@ -38,100 +39,15 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("atom? car cdr cons eq? false if null quit quote true");
-
-	// Setup the evaluator code
-	// Stack-recursive
-	machine->sys_eval = make_expression("							\
-		(if (atom? @[expr])											\
-            ($[lookup] @[expr] @[env])								\
-            (if (eq? (car @[expr]) (quote if))						\
-                ($[evif] (car (cdr @[expr]))						\
-                         (car (cdr (cdr @[expr])))					\
-                         (car (cdr (cdr (cdr @[expr]))))			\
-                         @[env])									\
-                (if (eq? (car @[expr]) (quote quote))				\
-                    (car (cdr @[expr]))								\
-                    (if (eq? (car @[expr]) (quote lambda))			\
-                        @[expr] 									\
-                        ($[apply] (car @[expr])						\
-                                  ($[evlis] (cdr @[expr]) @[env])	\
-                                  @[env])))))", SYS_FUNC_EVAL);
-	// Tail-recursive
-	machine->sys_apply = make_expression("							\
-		(if (atom? @[func])											\
-            (if (eq? @[func] (quote car))							\
-                (car (car @[args]))									\
-                (if (eq? @[func] (quote cdr))						\
-                    (cdr (car @[args]))								\
-                    (if (eq? @[func] (quote cons))					\
-                        (cons (car @[args]) (car (cdr @[args])))	\
-                        (if (eq? @[func] (quote eq?))				\
-                            (eq? (car @[args]) (car (cdr @[args])))	\
-                            (if (eq? @[func] (quote atom?))			\
-                                (atom? (car @[args]))				\
-                                ($[apply] ($[eval] @[func] @[env])	\
-                                          @[args] 					\
-                                          @[env]))))))				\
-            ($[eval] (car (cdr (cdr @[func])))						\
-                     ($[conenv] (car (cdr @[func]))					\
-                                @[args]								\
-                                @[env])))", SYS_FUNC_APPLY);
-    // Stack-recursive
-	machine->sys_evlis = make_expression("							\
-		(if (eq? @[args] null)										\
-            null													\
-            (cons ($[eval] (car @[args]) @[env])					\
-                  ($[evlis] (cdr @[args]) @[env])))", SYS_FUNC_EVLIS);
-	// Non-recursive
-	machine->sys_evif = make_expression("							\
-		(if ($[eval] @[pred] @[env])								\
-            ($[eval] @[then] @[env])								\
-            ($[eval] @[else] @[env]))", SYS_FUNC_EVIF);
-	// Stack-recursive
-	machine->sys_conenv = make_expression("							\
-		(if (eq? @[vars] null)										\
-            @[env]													\
-            (cons (cons (car @[vars]) (car @[args]))				\
-                  ($[conenv] (cdr @[vars])							\
-                             (cdr @[args])							\
-                             @[env])))", SYS_FUNC_CONENV);
-	// tail-recursive
-	machine->sys_lookup = make_expression("							\
-		(if (eq? (car (car @[env])) @[var])							\
-            (cdr (car @[env]))										\
-            ($[lookup] @[var] (cdr @[env])))", SYS_FUNC_LOOKUP);
+	init_instr_list("atom? car cdr cons eq? false if lambda null quit quote true");
 
 	// Initialize the machine system environment
-	machine->sys_env_stack = get_free_cell();
-	machine->sys_env_stack->cdr = machine->nil;
+	machine->sys_stack = get_free_cell();
+	machine->sys_stack->cdr = machine->nil;
 	Cell * expr = make_expression("(quote a)", 0);
 	Cell * env = make_expression("()", 0);
-	machine->sys_env_stack->car = push_args(expr, env, NULL);
-
-	machine->apply_func = get_free_cell();
-	machine->apply_func->cdr = machine->nil;
-	machine->apply_args = get_free_cell();
-	machine->apply_args->cdr = machine->nil;
-	machine->apply_env = get_free_cell();
-	machine->apply_env->cdr = machine->nil;
-
-	machine->evif_pred = get_free_cell();
-	machine->evif_pred->cdr = machine->nil;
-	machine->evif_then = get_free_cell();
-	machine->evif_then->cdr = machine->nil;
-	machine->evif_else = get_free_cell();
-	machine->evif_else->cdr = machine->nil;
-	machine->evif_env = get_free_cell();
-	machine->evif_env->cdr = machine->nil;
-
-	machine->lookup_var = get_free_cell();
-	machine->lookup_var->cdr = machine->nil;
-	machine->lookup_env = get_free_cell();
-	machine->lookup_env->cdr = machine->nil;
-
-	// Prepare machine for execution
-	machine->program = machine->sys_eval;
+	machine->sys_stack_size = 1;
+	machine->sys_stack->car = push_args(2, expr, env);
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -162,7 +78,6 @@ void init_instr_list(char * funcs) {
 
 	char (*memory_block)[INSTR_MAX_LENGTH + 1] = malloc(sizeof(char) * (INSTR_MAX_LENGTH + 1) * func_count);
 	char **instructions = malloc(sizeof(char *) * func_count);
-	uint8_t *instr_types = malloc(sizeof(uint8_t) * func_count);
 
 	int func_index = 0;
 	int string_index = 0;
@@ -189,35 +104,26 @@ void init_instr_list(char * funcs) {
 	machine->instr_memory_block = memory_block;
 	machine->instructions = instructions;
 	machine->num_of_instrs = func_count;
-	machine->instr_types = instr_types;
-
-	instr_types[0] = SYS_SYM_ATOM;
-	instr_types[1] = SYS_SYM_CAR;
-	instr_types[2] = SYS_SYM_CDR;
-	instr_types[3] = SYS_SYM_CONS;
-	instr_types[4] = SYS_SYM_EQ;
-	instr_types[5] = SYS_SYM_FALSE;
-	instr_types[6] = SYS_SYM_IF;
-	instr_types[7] = SYS_SYM_NULL;
-	instr_types[8] = SYS_SYM_QUIT;
-	instr_types[9] = SYS_SYM_QUOTE;
-	instr_types[10] = SYS_SYM_TRUE;
 }
 
-Cell * push_args(Cell * arg1, Cell * arg2, Cell * arg3) {
+Cell * push_args(int arg_count, ...) {
 	
 	Cell * result = get_free_cell();
-	result->car = arg1;
-	result->cdr = get_free_cell();
-	result->cdr->car = arg2;
+	Cell * cell = result;
 
-	if(arg3 == NULL) {
-		result->cdr->cdr = machine->nil;
-	}
-	else {
-		result->cdr->cdr = get_free_cell();
-		result->cdr->cdr->car = arg3;
-		result->cdr->cdr->cdr = machine->nil;
+	va_list args;
+	va_start(args, arg_count);
+
+	for(int i = 0; i < arg_count; ++i) {
+		cell->car = va_arg(args, Cell *);
+
+		if(i + 1 < arg_count) {
+			cell->cdr = get_free_cell();
+			cell = cell->cdr;
+		}
+		else {
+			cell->cdr = machine->nil;
+		}
 	}
 
 	return result;
@@ -225,7 +131,6 @@ Cell * push_args(Cell * arg1, Cell * arg2, Cell * arg3) {
 
 void destroy_machine(Lisp_Machine *machine) {
 
-	free(machine->instr_types);
 	free(machine->instr_memory_block);
 	free(machine->instructions);
 	free(machine->memory_block);
@@ -253,24 +158,14 @@ void store_cell(Cell * cell) {
 void execute() {
 
 	while(machine->is_running) {
-		switch(machine->program->car->type) {
-			SYS_SYM_CAR:
-			SYS_SYM_CDR:
-			SYS_SYM_CONS:
-			SYS_SYM_EQ:
-			SYS_SYM_ATOM:
-			SYS_SYM_QUOTE:
-			SYS_SYM_IF:
-			SYS_SYM_QUIT:
-			SYS_FUNC_EVAL:
-			SYS_FUNC_APPLY:
-			SYS_FUNC_EVLIS:
-			SYS_FUNC_EVIF:
-			SYS_FUNC_CONENV:
-			SYS_FUNC_LOOKUP:
-			default:
+		if(machine->sys_stack_size != 0) {
+//			sys_eval(machine->sys_env_stack->car->car, machine->sys_env_stack->car->cdr)
 		}
 	}
+}
+
+Cell * sys_eval(Cell * expr, Cell * env) {
+
 }
 
 /*

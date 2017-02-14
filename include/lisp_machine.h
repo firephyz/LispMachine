@@ -9,55 +9,22 @@
 
 	#define INSTR_MAX_LENGTH 10
 
-	#define EVAL_CONTEXT_EVAL 0
-	#define EVAL_CONTEXT_EVLIS 1
-	#define EVAL_CONTEXT_CONENV 2
-
 	// General variable symbol
 	#define SYS_GENERAL 0
 
 	// System instructions
-	#define SYS_SYM_CAR 	1
-	#define SYS_SYM_CDR 	2
-	#define SYS_SYM_CONS 	3
-	#define SYS_SYM_EQ		4
-	#define SYS_SYM_ATOM 	5
-	#define SYS_SYM_IF 		6
-	#define SYS_SYM_QUOTE 	7
-	#define SYS_SYM_QUIT	8
-
-	// Arguments to evaluation functions
-	// Has their own registers
-	#define SYS_ARG_APPLY_FUNC 		9
-	#define SYS_ARG_APPLY_ARGS 		10
-	#define SYS_ARG_APPLY_ENV 		11
-	#define SYS_ARG_EVIF_PRED 		12
-	#define SYS_ARG_EVIF_THEN 		13
-	#define SYS_ARG_EVIF_ELSE 		14
-	#define SYS_ARG_EVIF_ENV 		15
-	#define SYS_ARG_LOOKUP_VAR 		16
-	#define SYS_ARG_LOOKUP_ENV 		17
-	// These are kept in the sytem stack
-	#define SYS_ARG_EVAL_EXPR		18
-	#define SYS_ARG_EVAL_ENV		19
-	#define SYS_ARG_EVLIS_ARGS		20
-	#define SYS_ARG_EVLIS_ENV		21
-	#define SYS_ARG_CONENV_VARS		22
-	#define SYS_ARG_CONENV_ARGS		23
-	#define SYS_ARG_CONENV_ENV		24
-
-	// Evaluation functions
-	#define SYS_FUNC_EVAL			25
-	#define SYS_FUNC_APPLY			26
-	#define SYS_FUNC_EVLIS			27
-	#define SYS_FUNC_EVIF			28
-	#define SYS_FUNC_CONENV			29
-	#define SYS_FUNC_LOOKUP			30
-
-	// Other reserved symbols
-	#define SYS_SYM_NULL			32
-	#define SYS_SYM_FALSE			33
-	#define SYS_SYM_TRUE			34
+	#define SYS_SYM_ATOM 	1
+	#define SYS_SYM_CAR 	2
+	#define SYS_SYM_CDR		3
+	#define SYS_SYM_CONS	4
+	#define SYS_SYM_EQ 		5
+	#define SYS_SYM_FALSE	6
+	#define SYS_SYM_IF		7
+	#define SYS_SYM_LAMBDA	8
+	#define SYS_SYM_NULL	9
+	#define SYS_SYM_QUIT	10
+	#define SYS_SYM_QUOTE	11
+	#define SYS_SYM_TRUE	12
 
 	extern int chars_per_pointer;
 
@@ -122,38 +89,15 @@
 		Cell *free_mem;
 		Cell *nil;
 
-		// Marks where the machine is in execution of the evaluation functions
-		Cell * program;
-
-		// Evaluation functions
-		// $[func]
-		Cell * sys_eval;
-		Cell * sys_apply;
-		Cell * sys_evlis;
-		Cell * sys_evif;
-		Cell * sys_conenv;
-		Cell * sys_lookup;
-
 		// System environment
 		// This serve as registers to hold the arguments to the evaluation functions
-		Cell * sys_env_stack;
+		Cell * sys_stack;
+		int sys_stack_size;
 
-		Cell *apply_func;
-		Cell *apply_args;
-		Cell *apply_env;
-
-		Cell *evif_pred;
-		Cell *evif_then;
-		Cell *evif_else;
-		Cell *evif_env;
-
-		Cell *lookup_var;
-		Cell *lookup_env;
 
 		int num_of_instrs;
 		void *instr_memory_block;	// The actual memory supporting the variable instructions.
 		char **instructions;				// Holds the list of supported instructions in alphabetical order.
-		uint8_t *instr_types;			// Once we find a symbol matching a function, we return its corresponding type
 	};
 
 	Lisp_Machine * init_machine();
@@ -161,8 +105,10 @@
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);
-	Cell * push_args(Cell * arg1, Cell * arg2, Cell * arg3);
+	Cell * push_args(int arg_count, ...);
 	void execute();
+
+	Cell * sys_eval(Cell * expr, Cell * env);
 
 	Cell * car(Cell * cell);
 	Cell * cdr(Cell * cell);

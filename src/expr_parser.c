@@ -20,7 +20,7 @@ Cell * make_expression(char *expr, uint8_t expr_type) {
 	Cell root = {NULL, '\0', NULL, false, 0};
 	Cell * cell = &root;
 
-	Tokenizer * tk = make_tokenizer(exprn);
+	Tokenizer * tk = make_tokenizer(expr);
 	char * token = tokenizer_next(tk);
 	while(token != NULL) {
 		switch(token[0]) {
@@ -164,7 +164,7 @@ int index_of(char * string, char * targets) {
 // See make_expression function to understand the purpose of @expr_type
 Cell * make_symbol(char * name, uint8_t expr_type) {
 
-	uint8_t cell_type = determine_cell_type(name, expr_type);
+	uint8_t cell_type = determine_symbol_type(name);
 
 	Cell * result;
 	Cell * prev_cell;
@@ -202,32 +202,6 @@ Cell * make_symbol(char * name, uint8_t expr_type) {
 
 	result->is_atom = true;
 	result->type = cell_type;
-
-	return result;
-}
-
-// If the symbol starts with a $, it's a system function.
-// We then erforms a binary search on the alphabetically sorted function names in
-// machine->sys_funcs, thereby determining the type of the given symbol.
-// See make_expression symbol to understand @expr_type
-uint8_t determine_cell_type(char *name, uint8_t expr_type) {
-
-	uint8_t result = SYS_GENERAL;
-	char symbol_name[strlen(name) - 3 + 1];
-
-	switch(name[0]) {
-		case '$':
-			strcpy(symbol_name, name + 2);
-			result = determine_eval_func(symbol_name);
-			break;
-		case '@':
-			strcpy(symbol_name, name + 2);
-			result = determine_eval_arg(symbol_name, expr_type);
-			break;
-		default:
-			result = determine_symbol_type(name);
-			break;
-	}
 
 	return result;
 }
@@ -283,8 +257,9 @@ uint8_t determine_symbol_type(char * name) {
 						return SYS_GENERAL;
 					}
 					// We have matched the given name to a system function
+					// We add 1 because SYS_GENERAL takes up 0; we must start at 1 and go from there
 					else {
-						return machine->instr_types[mid_index];
+						return mid_index + 1;
 					}
 				}
 			}
@@ -292,101 +267,6 @@ uint8_t determine_symbol_type(char * name) {
 	}
 
 	return result;
-}
-
-// Distiguishes between eval, apply, evlis, evif, conenv, lookup
-uint8_t determine_eval_func(char * name) {
-
-	switch(name[0]) {
-		case 'e':
-			switch(name[2]) {
-				case 'a':
-					return SYS_FUNC_EVAL;
-				case 'l':
-					return SYS_FUNC_EVLIS;
-				case 'i':
-					return SYS_FUNC_EVIF;
-				default:
-					fprintf(stderr, "No evaluation function match found for %s.\n", name);
-					exit(EXIT_FAILURE);
-			}
-		case 'a':
-			return SYS_FUNC_APPLY;
-		case 'c':
-			return SYS_FUNC_CONENV;
-		case 'l':
-			return SYS_FUNC_LOOKUP;
-		default:
-			fprintf(stderr, "No evaluation function match found for %s.\n", name);
-			exit(EXIT_FAILURE);
-	}
-
-	// Shut up compiler
-	return 0;
-}
-
-uint8_t determine_eval_arg(char * arg, uint8_t expr_type) {
-
-	switch(expr_type) {
-		case SYS_FUNC_EVAL:
-			if(arg[1] == 'x') {
-				return SYS_ARG_EVAL_EXPR;
-			}
-			else if (arg[1] == 'n') {
-				return SYS_ARG_EVAL_ENV;
-			}
-		case SYS_FUNC_APPLY:
-			if(arg[0] == 'f') {
-				return SYS_ARG_APPLY_FUNC;
-			}
-			else if (arg[0] == 'a') {
-				return SYS_ARG_APPLY_ARGS;
-			}
-			else if (arg[0] == 'e') {
-				return SYS_ARG_APPLY_ENV;
-			}
-		case SYS_FUNC_EVLIS:
-			if(arg[0] == 'a') {
-				return SYS_ARG_EVLIS_ARGS;
-			}
-			else if (arg[0] == 'e') {
-				return SYS_ARG_EVLIS_ENV;
-			}
-		case SYS_FUNC_EVIF:
-			switch(arg[1]) {
-				case 'r':
-					return SYS_ARG_EVIF_PRED;
-				case 'h':
-					return SYS_ARG_EVIF_THEN;
-				case 'l':
-					return SYS_ARG_EVIF_ELSE;
-				case 'n':
-					return SYS_ARG_EVIF_ENV;
-			}
-		case SYS_FUNC_CONENV:
-			if(arg[0] == 'v') {
-				return SYS_ARG_CONENV_VARS;
-			}
-			else if (arg[0] == 'a') {
-				return SYS_ARG_CONENV_ARGS;
-			}
-			else if (arg[0] == 'e') {
-				return SYS_ARG_CONENV_ENV;
-			}
-		case SYS_FUNC_LOOKUP:
-			if(arg[0] == 'v') {
-				return SYS_ARG_LOOKUP_VAR;
-			}
-			else if (arg[0] == 'e') {
-				return SYS_ARG_LOOKUP_ENV;
-			}
-		default:
-			fprintf(stderr, "Invalid system evaluation type %d.\n", expr_type);
-			exit(EXIT_FAILURE);
-	}
-
-	// Shut up compiler
-	return 0;
 }
 
 char * get_symbol_name(Cell * sym) {
