@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdarg.h>
 
 int chars_per_pointer = sizeof(uintptr_t) / sizeof(char);
 bool verbose_flag;
@@ -52,72 +51,6 @@ Lisp_Machine * init_machine() {
 	return machine;
 }
 
-// Creates an array with all the names of the system functions.
-// Expects a string containing all the function names
-// each seperated by some whitespace. Must have no whitespace 
-// surrounding the whole string
-void init_instr_list(char * funcs) {
-
-	int func_count = 1;
-	bool parsing_white_space = false;
-	for(int i = 0; i < strlen(funcs); ++i) {
-		if(funcs[i] == ' ' || funcs[i] == '\t') {
-			if(!parsing_white_space) {
-				++func_count;
-				parsing_white_space = true;
-			}
-		}
-		else {
-			parsing_white_space = false;
-		}
-	}
-
-	char (*memory_block)[INSTR_MAX_LENGTH + 1] = malloc(sizeof(char) * (INSTR_MAX_LENGTH + 1) * func_count);
-	char **instructions = malloc(sizeof(char *) * func_count);
-
-	int func_index = 0;
-	int string_index = 0;
-	for(int i = 0; i < strlen(funcs); ++i) {
-		if(funcs[i] == ' ' || funcs[i] == '\t') {
-			if(!parsing_white_space) {
-				++func_index;
-				parsing_white_space = true;
-			}
-
-			string_index = 0;
-		}
-		else {
-			parsing_white_space = false;
-			memory_block[func_index][string_index] = funcs[i];
-			++string_index;
-		}
-	}
-
-	for(int i = 0; i < func_count; ++i) {
-		instructions[i] = (char *)&memory_block[i];
-	}
-
-	machine->instr_memory_block = memory_block;
-	machine->instructions = instructions;
-	machine->num_of_instrs = func_count;
-}
-
-Cell * push_system_args(Cell * stack, int arg_count, ...) {
-
-	va_list args;
-	va_start(args, arg_count);
-
-	for(int i = 0; i < arg_count; ++i) {
-		Cell * cell = get_free_cell();
-		cell->car = va_arg(args, Cell *);
-		cell->cdr = stack;
-		++machine->sys_stack_size;
-		stack = cell;
-	}
-
-	return stack;
-}
-
 void destroy_machine(Lisp_Machine *machine) {
 
 	free(machine->instr_memory_block);
@@ -143,59 +76,100 @@ void store_cell(Cell * cell) {
 	machine->free_mem = cell;
 }
 
+// Pushes the given number of arguments from the machine->args registers
+// onto the system stack. Tops it with the calling function record.
+void push_system_args(int arg_count) {
+
+	// Push arguments still needed for calling function
+	for(int i = 0; i < arg_count; ++i) {
+		Cell * cell = get_free_cell();
+		cell->car = machine->args[3 - i];
+		cell->cdr = machine->sys_stack;
+		machine->sys_stack = cell;
+		++machine->sys_stack_size;
+	}
+
+	// Record calling function
+	Cell * cell = get_free_cell();
+	cell->type = SYS_RETURN_RECORD;
+	cell->car = (Cell *)machine->calling_func;
+	cell->cdr = machine->sys_stack;
+	machine->sys_stack = cell;
+	++machine->sys_stack_size;
+}
+
+// Pops the calling function and then pops the arguments in the registers
+void pop_system_args() {
+
+	// Restore the calling function
+	machine->calling_func = (uint8_t)machine->sys_stack->car;
+	machine->sys_stack = machine->sys_stack->cdr;
+	--machine->sys_stack_size;
+
+	int arg_count = 0;
+	// Restore arguments
+	while(machine->sys_stack->type != SYS_RETURN_RECORD) {
+		machine->args[arg_count] = machine->sys_stack->car;
+		machine->sys_stack = machine->sys_stack->cdr;
+		--machine->sys_stack_size;
+
+		++arg_count;
+	}
+}
+
 // Implements the various system evalution functions using gotos so that
 // we don't use the normal stack with normal function calls. We must use
 // our own machine stack built from cons cells.
+
+// The calling convention is as follows:
+// - Calling function pushes the arguments needed for later onto the stack.
+// - Calling function pushes the return function onto the stack
+// - Calling function sets up arguments for next function
+// - Jump to the next function
+// - Once next function is complete, it pops the stack.
+// - Called function returns according to the machine->calling_func register set by the previous pop
 void execute() {
 
-	Cell * code = make_expression("(quote a)");
-	Cell * environment = make_expression("()");
-	machine->current_args = push_system_args(machine->nil, 2, code, environment);
+	machine->args[0] = make_expression("(quote a)");
+	machine->args[1] = make_expression("()");
+	machine->calling_func = SYS_REPL;
 
-	// Used at temporary storage of current_args variables so that we
-	// don't have to car and cdr so much. Might not be used
-	// in actual hardware implementation.
-	Cell * arg0;
-	Cell * arg1;
-	Cell * arg2;
-	Cell * arg3;
 
 sys_eval:
-	arg0 = machine->current_args->car;
-	arg1 = machine->current_args->cdr->car;
-
-	if(arg0->is_atom) {
+	if(machine->args[0]->is_atom) {
+		push_system_args(0);
 		goto sys_lookup;
 	}
 	else {
-		switch(arg0->car->type) {
+		switch(machine->args[0]->car->type) {
 			case SYS_SYM_IF:
-				machine->current_args = push_system_args(
-					machine->nil,
-					4, 
-					arg0->cdr->car, 
-					arg0->cdr->cdr->car, 
-					arg0->cdr->cdr->cdr->car, 
-					arg1);
+				// Push calling function
+				push_system_args(0);
+				// Setup arguments for next function
+				machine->args[3] = machine->args[1];
+				machine->args[0] = machine->args[0]->cdr->car;
+				machine->args[1] = machine->args[0]->cdr->cdr->car;
+				machine->args[2] = machine->args[0]->cdr->cdr->cdr->car;
 				goto sys_evif;
 			case SYS_SYM_LAMBDA:
-				machine->result = arg0;
+				machine->result = machine->args[0];
 				break;
 			case SYS_SYM_QUOTE:
-				machine->result = arg0->cdr->car;
+				machine->result = machine->args[0]->cdr->car;
 				break;
 			default:
 				// Push args for later access
-				machine->sys_stack = push_system_args(machine->sys_stack, 2, arg0, arg1);
-				// Set up the args for sys_evlis
-				machine->current_args = push_system_args(machine->nil, 2, arg0->cdr, arg1);
-				// Evaluate the function args
+				push_system_args(2);
+				// Setup args for evlis
+				machine->args[0] = machine->args[0]->cdr;
+				machine->args[1] = machine->args[1];
 				goto sys_evlis;
 sys_eval_evlis_continue:
+				push_system_args(0);
 				// Set up args for sys_apply
-				machine->current_args = push_system_args(machine->nil, 3, machine->sys_stack->car->car, machine->result, machine->sys_stack->cdr->car);
-				// Pop the stack
-				machine->sys_stack = machine->sys_stack->cdr->cdr;
+				machine->args[0] = machine->args[0]->car;
+				machine->args[2] = machine->args[1];
+				machine->args[1] = machine->result;
 				goto sys_apply;
 		}
 	}
@@ -203,46 +177,15 @@ sys_eval_evlis_continue:
 	// Return from sys_eval
 sys_eval_return:
 	switch(machine->calling_func) {
-		case SYS_EVAL:;
 		case SYS_APPLY:;
 		case SYS_EVLIS:;
 		case SYS_EVIF:;
-		case SYS_CONENV:;
-		case SYS_LOOKUP:;
 		case SYS_REPL:;
 		default:;
 	}
 
 sys_apply:
 sys_evlis:
-
-	arg0 = machine->current_args->car;
-	arg1 = machine->current_args->cdr->car;
-
-	if(arg0 == machine->nil) {
-		machine->result = machine->nil;
-	}
-	else {
-		machine->sys_stack = push_system_args(machine->sys_stack, 2, arg0, arg1);
-		machine->current_args = push_system_args(machine->nil, 2, arg0->car, arg1);
-		goto sys_eval;
-sys_evlis_eval_continue:
-		machine->sys_stack = push_system_args(machine->sys_stack, 1, machine->result);
-		machine->current_args = push_system_args(machine->nil, 2, machine->sys_stack->cdr->car->cdr, machine->sys_stack->cdr->cdr->car);
-		goto sys_evlis;
-sys_evlis_evlis_continue:
-		machine->result = cons(machine->sys_stack->car, machine->result);
-		machine->sys_stack = machine->sys_stack->cdr->cdr->cdr;
-	}
-
-	// switch(machine->)
-
-// (define evlis
-//   (lambda (args env)
-//     (if (eq? args (quote ()))
-//         '()
-//         (cons (eval (car args) env)
-//               (evlis (cdr args) env)))))
 sys_evif:;
 sys_lookup:;
 }
@@ -343,4 +286,54 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 
 	// Should never reach this. Make compiler happy
 	return NULL;
+}
+
+// Creates an array with all the names of the system functions.
+// Expects a string containing all the function names
+// each seperated by some whitespace. Must have no whitespace 
+// surrounding the whole string
+void init_instr_list(char * funcs) {
+
+	int func_count = 1;
+	bool parsing_white_space = false;
+	for(int i = 0; i < strlen(funcs); ++i) {
+		if(funcs[i] == ' ' || funcs[i] == '\t') {
+			if(!parsing_white_space) {
+				++func_count;
+				parsing_white_space = true;
+			}
+		}
+		else {
+			parsing_white_space = false;
+		}
+	}
+
+	char (*memory_block)[INSTR_MAX_LENGTH + 1] = malloc(sizeof(char) * (INSTR_MAX_LENGTH + 1) * func_count);
+	char **instructions = malloc(sizeof(char *) * func_count);
+
+	int func_index = 0;
+	int string_index = 0;
+	for(int i = 0; i < strlen(funcs); ++i) {
+		if(funcs[i] == ' ' || funcs[i] == '\t') {
+			if(!parsing_white_space) {
+				++func_index;
+				parsing_white_space = true;
+			}
+
+			string_index = 0;
+		}
+		else {
+			parsing_white_space = false;
+			memory_block[func_index][string_index] = funcs[i];
+			++string_index;
+		}
+	}
+
+	for(int i = 0; i < func_count; ++i) {
+		instructions[i] = (char *)&memory_block[i];
+	}
+
+	machine->instr_memory_block = memory_block;
+	machine->instructions = instructions;
+	machine->num_of_instrs = func_count;
 }

@@ -9,22 +9,27 @@
 
 	#define INSTR_MAX_LENGTH 10
 
+	/********************************* Cell Types *******************************/
 	// General variable symbol
 	#define SYS_GENERAL 0
 
+	// Type for return function record in system stack
+	#define SYS_RETURN_RECORD 1
+
 	// System instructions
-	#define SYS_SYM_ATOM 	1
-	#define SYS_SYM_CAR 	2
-	#define SYS_SYM_CDR		3
-	#define SYS_SYM_CONS	4
-	#define SYS_SYM_EQ 		5
-	#define SYS_SYM_FALSE	6
-	#define SYS_SYM_IF		7
-	#define SYS_SYM_LAMBDA	8
-	#define SYS_SYM_NULL	9
-	#define SYS_SYM_QUIT	10
-	#define SYS_SYM_QUOTE	11
-	#define SYS_SYM_TRUE	12
+	#define SYS_SYM_ATOM 	2
+	#define SYS_SYM_CAR 	3
+	#define SYS_SYM_CDR		4
+	#define SYS_SYM_CONS	5
+	#define SYS_SYM_EQ 		6
+	#define SYS_SYM_FALSE	7
+	#define SYS_SYM_IF		8
+	#define SYS_SYM_LAMBDA	9
+	#define SYS_SYM_NULL	10
+	#define SYS_SYM_QUIT	11
+	#define SYS_SYM_QUOTE	12
+	#define SYS_SYM_TRUE	13
+	/********************************* End Cell Types ***************************/
 
 	// Used for machine.calling_func so that functions know where to return.
 	#define SYS_EVAL 		0
@@ -104,11 +109,14 @@
 		int sys_stack_size;
 
 		// Small, one context sized stack, that holds all the args necessary
-		// for a system evaluation function to execute.
-		Cell * current_args;
 		// Holds the result from the last evaluation
 		Cell * result;
-		int calling_func;
+
+		// Used at temporary storage of current_args variables so that we
+		// don't have to car and cdr so much. Might not be used
+		// in actual hardware implementation.
+		Cell *args[4];
+		uint8_t calling_func;
 
 
 		int num_of_instrs;
@@ -121,7 +129,8 @@
 	void destroy_machine(Lisp_Machine *machine);
 	Cell * get_free_cell();
 	void store_cell(Cell * cell);
-	Cell * push_system_args(Cell * stack, int arg_count, ...);
+	void push_system_args(int arg_count);
+	void pop_system_args();
 	void execute();
 
 	Cell * car(Cell * cell);
