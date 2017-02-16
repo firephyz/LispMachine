@@ -32,13 +32,15 @@
 	/********************************* End Cell Types ***************************/
 
 	// Used for machine.calling_func so that functions know where to return.
-	#define SYS_EVAL 		0
-	#define SYS_APPLY		1
-	#define SYS_EVLIS		2
-	#define SYS_EVIF		3
-	#define SYS_CONENV		4
-	#define SYS_LOOKUP		5
-	#define SYS_REPL		6
+	#define SYS_EVAL_0		0
+	#define SYS_EVAL_1		1
+	#define SYS_APPLY_0		2
+	#define SYS_APPLY_1		3
+	#define SYS_EVLIS		4
+	#define SYS_EVIF		5
+	#define SYS_CONENV		6
+	#define SYS_LOOKUP		7
+	#define SYS_REPL		8
 
 	extern int chars_per_pointer;
 

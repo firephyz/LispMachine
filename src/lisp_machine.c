@@ -134,10 +134,13 @@ void execute() {
 	machine->args[1] = make_expression("()");
 	machine->calling_func = SYS_REPL;
 
-
+/***********************************************************
+ ************************* Eval ****************************
+ ***********************************************************/
 sys_eval:
 	if(machine->args[0]->is_atom) {
 		push_system_args(0);
+		machine->calling_func = SYS_EVAL_1;
 		goto sys_lookup;
 	}
 	else {
@@ -150,6 +153,8 @@ sys_eval:
 				machine->args[0] = machine->args[0]->cdr->car;
 				machine->args[1] = machine->args[0]->cdr->cdr->car;
 				machine->args[2] = machine->args[0]->cdr->cdr->cdr->car;
+
+				machine->calling_func = SYS_EVAL_1;
 				goto sys_evif;
 			case SYS_SYM_LAMBDA:
 				machine->result = machine->args[0];
@@ -163,6 +168,8 @@ sys_eval:
 				// Setup args for evlis
 				machine->args[0] = machine->args[0]->cdr;
 				machine->args[1] = machine->args[1];
+
+				machine->calling_func = SYS_EVAL_0;
 				goto sys_evlis;
 sys_eval_evlis_continue:
 				push_system_args(0);
@@ -170,6 +177,8 @@ sys_eval_evlis_continue:
 				machine->args[0] = machine->args[0]->car;
 				machine->args[2] = machine->args[1];
 				machine->args[1] = machine->result;
+
+				machine->calling_func = SYS_EVAL_1;
 				goto sys_apply;
 		}
 	}
@@ -177,17 +186,98 @@ sys_eval_evlis_continue:
 	// Return from sys_eval
 sys_eval_return:
 	switch(machine->calling_func) {
-		case SYS_APPLY:;
-		case SYS_EVLIS:;
-		case SYS_EVIF:;
-		case SYS_REPL:;
+		case SYS_APPLY_0:
+		case SYS_APPLY_1:
+		case SYS_EVLIS:
+		case SYS_EVIF:
+		case SYS_REPL:
+		default:
+	}
+
+/***********************************************************
+ ************************* Apply ***************************
+ ***********************************************************/
+
+sys_apply:
+	
+	if(args[0]->is_atom) {
+		switch(machine->args[0]->type) {
+			SYS_SYM_CAR:
+				machine->result = machine->args[1]->car->car;
+				break;
+			SYS_SYM_CDR:
+				machine->result = machine->args[1]->car->cdr;
+				break;
+			SYS_SYM_CONS:
+				machine->result = cons(machine->args[1]->car, machine->args[1]->cdr->car);
+				break;
+			SYS_SYM_EQ:
+				machine->result = eq(machine->args[1]->car, machine->args[1]->cdr->car);
+				break;
+			SYS_SYM_ATOM:
+				machine->result = atom(machine->args[1]->car);
+				break;
+			SYS_SYM_HALT:
+				// TODO
+				break;
+			default:
+				push_system_args(3);
+
+				machine->args[0] = machine->args[0];
+				machine->args[1] = machine->args[2];
+
+				machine->calling_func = SYS_APPLY_0;
+				goto sys_eval;
+
+sys_apply_eval_continue:
+				push_system_args(0);
+
+				machine->args[0] = machine->result;
+				machine->args[1] = machine->args[1];
+				machine->args[2] = machine->args[2];
+
+				machine->calling_func = SYS_APPLY_1;
+				goto sys_apply;
+		}
+	}
+	else {
+		push_system_args(3);
+		machine->args[0] = machine->args[0]->cdr->car;
+		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->args[2];
+
+		machine->calling_func = SYS_APPLY_1;
+		goto sys_conenv;
+
+		push_system_args(0);
+		machine->args[0] = machine->args[0]->cdr->cdr->car;
+		machine->args[1] = machine->result;
+
+		machine->calling_func = SYS_APPLY_1;
+		goto eval:
+	}
+
+
+	// Return from sys_apply
+sys_apply_return:
+	switch(machine->calling_func) {
 		default:;
 	}
 
-sys_apply:
+// (if (atom? func)
+//         (cond ((eq? func (quote car)) (car (car args)))
+//               ((eq? func (quote cdr)) (cdr (car args)))
+//               ((eq? func (quote cons)) (cons (car args) (car (cdr args))))
+//               ((eq? func (quote eq?)) (eq? (car args) (car (cdr args))))
+//               ((eq? func (quote atom?)) (atom? (car args)))
+//               ((eq? func (quote eval)) (quote SYS_EVAL))
+//               ((eq? func (quote quit)) (quote SYS_QUIT))
+//               (else (apply (eval func env) args env)))
+//         (eval (car (cdr (cdr func))) (conenv (car (cdr func)) args env)))
 sys_evlis:
-sys_evif:;
-sys_lookup:;
+sys_evif:
+sys_conenv:
+sys_lookup:
 }
 
 /*
