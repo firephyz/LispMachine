@@ -39,30 +39,15 @@
 (define apply
   (lambda (func args env)
     (if (atom? func)
-        (cond ((primitive? func)
-               (cond ((eq? func (quote car)) (car (car args)))
-                     ((eq? func (quote cdr)) (cdr (car args)))
-                     ((eq? func (quote cons)) (cons (car args) (car (cdr args))))
-                     ((eq? func (quote eq?)) (eq? (car args) (car (cdr args))))
-                     ((eq? func (quote atom?)) (atom? (car args)))
-                     (else (apply (eval func env) args env))))
-              ((syscall? func)
-               (cond ((eq? func (quote eval)) (quote eval))
-                     ((eq? func (quote quit)) (quote quit)))))
+        (cond ((eq? func (quote car)) (car (car args)))
+              ((eq? func (quote cdr)) (cdr (car args)))
+              ((eq? func (quote cons)) (cons (car args) (car (cdr args))))
+              ((eq? func (quote eq?)) (eq? (car args) (car (cdr args))))
+              ((eq? func (quote atom?)) (atom? (car args)))
+              ((eq? func (quote eval)) (quote eval))
+              ((eq? func (quote quit)) (quote quit))
+              (else (apply (eval func env) args env)))
         (eval (car (cdr (cdr func))) (conenv (car (cdr func)) args env)))))
-
-(define primitive?
-  (lambda (func)
-    (or (eq? func (quote car))
-        (eq? func (quote cdr))
-        (eq? func (quote cons))
-        (eq? func (quote eq?))
-        (eq? func (quote ?atom)))))
-
-(define syscall?
-  (lambda (func)
-    (or (eq? func (quote eval))
-        (eq? func (quote quit)))))
 
 (define evlis
   (lambda (args env)
