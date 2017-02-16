@@ -187,7 +187,9 @@ sys_eval_evlis_continue:
 sys_eval_return:
 	switch(machine->calling_func) {
 		case SYS_APPLY_0:
+			goto sys_apply_eval_continue;
 		case SYS_APPLY_1:
+			goto sys_apply_return;
 		case SYS_EVLIS:
 		case SYS_EVIF:
 		case SYS_REPL:
@@ -261,6 +263,8 @@ sys_apply_eval_continue:
 	// Return from sys_apply
 sys_apply_return:
 	switch(machine->calling_func) {
+		case SYS_EVAL_1:
+			goto sys_eval_return;
 		default:;
 	}
 
