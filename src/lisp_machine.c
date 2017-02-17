@@ -92,7 +92,7 @@ void push_system_args(int arg_count) {
 	// Record calling function
 	Cell * cell = get_free_cell();
 	cell->type = SYS_RETURN_RECORD;
-	cell->car = (Cell *)machine->calling_func;
+	cell->car = (Cell *)(intptr_t)machine->calling_func;
 	cell->cdr = machine->sys_stack;
 	machine->sys_stack = cell;
 	++machine->sys_stack_size;
@@ -102,7 +102,7 @@ void push_system_args(int arg_count) {
 void pop_system_args() {
 
 	// Restore the calling function
-	machine->calling_func = (uint8_t)machine->sys_stack->car;
+	machine->calling_func = (uint8_t)(intptr_t)machine->sys_stack->car;
 	machine->sys_stack = machine->sys_stack->cdr;
 	--machine->sys_stack_size;
 
@@ -201,7 +201,6 @@ sys_eval_return:
 			goto sys_evif_return;
 		case SYS_REPL:
 			goto sys_execute_done;
-		default:
 	}
 
 /***********************************************************
@@ -210,24 +209,24 @@ sys_eval_return:
 
 sys_apply:
 	
-	if(args[0]->is_atom) {
+	if(machine->args[0]->is_atom) {
 		switch(machine->args[0]->type) {
-			SYS_SYM_CAR:
+			case SYS_SYM_CAR:
 				machine->result = machine->args[1]->car->car;
 				break;
-			SYS_SYM_CDR:
+			case SYS_SYM_CDR:
 				machine->result = machine->args[1]->car->cdr;
 				break;
-			SYS_SYM_CONS:
+			case SYS_SYM_CONS:
 				machine->result = cons(machine->args[1]->car, machine->args[1]->cdr->car);
 				break;
-			SYS_SYM_EQ:
+			case SYS_SYM_EQ:
 				machine->result = eq(machine->args[1]->car, machine->args[1]->cdr->car);
 				break;
-			SYS_SYM_ATOM:
+			case SYS_SYM_ATOM:
 				machine->result = atom(machine->args[1]->car);
 				break;
-			SYS_SYM_HALT:
+			case SYS_SYM_QUIT:
 				// TODO
 				break;
 			default:
@@ -267,7 +266,7 @@ sys_apply_conenv_continue:
 		machine->args[1] = machine->result;
 
 		machine->calling_func = SYS_APPLY_2;
-		goto sys_eval:
+		goto sys_eval;
 	}
 
 
@@ -280,7 +279,6 @@ sys_apply_return:
 			goto sys_eval_return;
 		case SYS_APPLY_2:
 			goto sys_apply_return;
-		default:
 	}
 
 /***********************************************************
@@ -325,7 +323,6 @@ sys_evlis_evlis_continue:
 			goto sys_eval_evlis_continue;
 		case SYS_EVLIS_1:
 			goto sys_evlis_evlis_continue;
-		default:
 	}
 
 /***********************************************************
@@ -367,7 +364,6 @@ sys_evif_return:
 	switch(machine->calling_func) {
 		case SYS_EVAL_1:
 			goto sys_eval_return;
-		default:
 	}
 
 /***********************************************************
@@ -432,7 +428,6 @@ sys_lookup_return:
 			goto sys_eval_return;
 		case SYS_LOOKUP_0:
 			goto sys_lookup_return;
-		default:
 	}
 
 
