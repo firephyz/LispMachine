@@ -184,6 +184,7 @@ sys_eval_evlis_continue:
 	}
 
 	// Return from sys_eval
+	pop_system_args();
 sys_eval_return:
 	switch(machine->calling_func) {
 		case SYS_APPLY_0:
@@ -191,6 +192,7 @@ sys_eval_return:
 		case SYS_APPLY_1:
 			goto sys_apply_return;
 		case SYS_EVLIS:
+			goto sys_evlis_eval_continue;
 		case SYS_EVIF:
 		case SYS_REPL:
 		default:
@@ -256,29 +258,63 @@ sys_apply_eval_continue:
 		machine->args[1] = machine->result;
 
 		machine->calling_func = SYS_APPLY_1;
-		goto eval:
+		goto sys_eval:
 	}
 
 
 	// Return from sys_apply
 sys_apply_return:
+	pop_system_args();
 	switch(machine->calling_func) {
 		case SYS_EVAL_1:
 			goto sys_eval_return;
-		default:;
+		default:
 	}
 
-// (if (atom? func)
-//         (cond ((eq? func (quote car)) (car (car args)))
-//               ((eq? func (quote cdr)) (cdr (car args)))
-//               ((eq? func (quote cons)) (cons (car args) (car (cdr args))))
-//               ((eq? func (quote eq?)) (eq? (car args) (car (cdr args))))
-//               ((eq? func (quote atom?)) (atom? (car args)))
-//               ((eq? func (quote eval)) (quote SYS_EVAL))
-//               ((eq? func (quote quit)) (quote SYS_QUIT))
-//               (else (apply (eval func env) args env)))
-//         (eval (car (cdr (cdr func))) (conenv (car (cdr func)) args env)))
 sys_evlis:
+
+	if(machine->args[0] = machine->nil) {
+		machine->result = machine->nil;
+	}
+	else {
+		push_system_args(2);
+
+		machine->args[0] = machine->args[0]->car;
+		machine->args[1] = machine->args[1];
+
+		machine->calling_func = SYS_EVLIS_0;
+		goto sys_eval;
+
+sys_evlis_eval_continue:
+		// Save the result so push 3 args
+		machine->args[2] = machine->result;
+		push_system_args(3);
+
+		machine->args[0] = machine->args[0]->cdr;
+		machine->args[1] = machine->args[1];
+
+		machine->calling_func = SYS_EVLIS_1;
+		goto sys_evlis;
+
+sys_evlis_evlis_continue:
+		
+		machine->result = cons(machine->args[2], machine->result);
+	}
+
+	pop_system_args();
+	switch(machine->calling_func) {
+		case SYS_EVAL_0:
+			goto sys_eval_evlis_continue;
+		case SYS_EVLIS_1:
+			goto sys_evlis_evlis_continue;
+		default:
+	}
+// (define evlis
+ //  (lambda (args env)
+ //    (if (eq? args (quote ()))
+ //        '()
+ //        (cons (eval (car args) env)
+ //              (evlis (cdr args) env)))))
 sys_evif:
 sys_conenv:
 sys_lookup:
