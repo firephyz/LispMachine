@@ -108,7 +108,7 @@ void pop_system_args() {
 
 	int arg_count = 0;
 	// Restore arguments
-	while(machine->sys_stack->type != SYS_RETURN_RECORD) {
+	while(machine->sys_stack->type != SYS_RETURN_RECORD && machine->sys_stack != machine->nil) {
 		machine->args[arg_count] = machine->sys_stack->car;
 		machine->sys_stack = machine->sys_stack->cdr;
 		--machine->sys_stack_size;
@@ -130,9 +130,12 @@ void pop_system_args() {
 // - Called function returns according to the machine->calling_func register set by the previous pop
 void execute() {
 
-	machine->args[0] = make_expression("(quote a)");
-	machine->args[1] = make_expression("()");
 	machine->calling_func = SYS_REPL;
+	push_system_args(0);
+
+
+	machine->args[0] = make_expression("(quote (a))");
+	machine->args[1] = make_expression("()");
 
 /***********************************************************
  ************************* Eval ****************************

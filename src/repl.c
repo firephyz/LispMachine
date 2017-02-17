@@ -41,6 +41,8 @@ int main(int argc, char * argv[]) {
 	// Begin execution of the machine
 	execute();
 
+	print_list(machine->result);
+
 	destroy_machine(machine);
 }
 

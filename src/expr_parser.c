@@ -257,9 +257,9 @@ uint8_t determine_symbol_type(char * name) {
 						return SYS_GENERAL;
 					}
 					// We have matched the given name to a system function
-					// We add 1 because SYS_GENERAL takes up 0; we must start at 1 and go from there
+					// We add 2 because SYS_GENERAL takes up 0 and SYS_RETURN_RECORD takes up 1; we must start at 2 and go from there
 					else {
-						return mid_index + 1;
+						return mid_index + 2;
 					}
 				}
 			}
