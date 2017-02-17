@@ -134,7 +134,7 @@ void execute() {
 	push_system_args(0);
 
 
-	machine->args[0] = make_expression("(quote (a))");
+	machine->args[0] = make_expression("(quote a)");
 	machine->args[1] = make_expression("()");
 
 /***********************************************************

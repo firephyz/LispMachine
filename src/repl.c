@@ -48,10 +48,20 @@ int main(int argc, char * argv[]) {
 
 void print_list(Cell *list) {
 
-	// Handles the case when it is only the empty list
-	if(list == machine->nil) {
-		printf("()\n");
-		return;
+	if(list->is_atom) {
+
+		// Handles the case when it is only the empty list
+		if(list == machine->nil) {
+			printf("()\n");
+			return;
+		}
+		// Else must be a normal symbol
+		else {
+			char * symbol = get_symbol_name(list);
+			printf("%s\n", symbol);
+			free(symbol);
+			return;
+		}
 	}
 
 	Cell * cell = list;
