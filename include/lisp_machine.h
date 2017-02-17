@@ -36,11 +36,14 @@
 	#define SYS_EVAL_1		1
 	#define SYS_APPLY_0		2
 	#define SYS_APPLY_1		3
-	#define SYS_EVLIS		4
-	#define SYS_EVIF		5
-	#define SYS_CONENV		6
-	#define SYS_LOOKUP		7
-	#define SYS_REPL		8
+	#define SYS_APPLY_2		4
+	#define SYS_EVLIS_0		5
+	#define SYS_EVLIS_1		6
+	#define SYS_EVIF_0		7
+	#define SYS_EVIF_1		8
+	#define SYS_CONENV_0	9
+	#define SYS_LOOKUP_0	10
+	#define SYS_REPL		11
 
 	extern int chars_per_pointer;
 

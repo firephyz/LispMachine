@@ -171,6 +171,7 @@ sys_eval:
 
 				machine->calling_func = SYS_EVAL_0;
 				goto sys_evlis;
+// SYS_EVAL_0
 sys_eval_evlis_continue:
 				push_system_args(0);
 				// Set up args for sys_apply
@@ -184,17 +185,22 @@ sys_eval_evlis_continue:
 	}
 
 	// Return from sys_eval
-	pop_system_args();
+// SYS_EVAL_1
 sys_eval_return:
+	pop_system_args();
 	switch(machine->calling_func) {
 		case SYS_APPLY_0:
 			goto sys_apply_eval_continue;
-		case SYS_APPLY_1:
+		case SYS_APPLY_2:
 			goto sys_apply_return;
-		case SYS_EVLIS:
+		case SYS_EVLIS_0:
 			goto sys_evlis_eval_continue;
-		case SYS_EVIF:
+		case SYS_EVIF_0:
+			goto sys_evif_eval_continue;
+		case SYS_EVIF_1:
+			goto sys_evif_return;
 		case SYS_REPL:
+			goto sys_execute_done;
 		default:
 	}
 
@@ -233,6 +239,7 @@ sys_apply:
 				machine->calling_func = SYS_APPLY_0;
 				goto sys_eval;
 
+// SYS_APPLY_0
 sys_apply_eval_continue:
 				push_system_args(0);
 
@@ -240,7 +247,7 @@ sys_apply_eval_continue:
 				machine->args[1] = machine->args[1];
 				machine->args[2] = machine->args[2];
 
-				machine->calling_func = SYS_APPLY_1;
+				machine->calling_func = SYS_APPLY_2;
 				goto sys_apply;
 		}
 	}
@@ -253,27 +260,36 @@ sys_apply_eval_continue:
 		machine->calling_func = SYS_APPLY_1;
 		goto sys_conenv;
 
+// SYS_APPLY_1
+sys_apply_conenv_continue:
 		push_system_args(0);
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
 		machine->args[1] = machine->result;
 
-		machine->calling_func = SYS_APPLY_1;
+		machine->calling_func = SYS_APPLY_2;
 		goto sys_eval:
 	}
 
 
 	// Return from sys_apply
+// SYS_APPLY_2
 sys_apply_return:
 	pop_system_args();
 	switch(machine->calling_func) {
 		case SYS_EVAL_1:
 			goto sys_eval_return;
+		case SYS_APPLY_2:
+			goto sys_apply_return;
 		default:
 	}
 
+/***********************************************************
+ ************************* Evlis ***************************
+ ***********************************************************/
+
 sys_evlis:
 
-	if(machine->args[0] = machine->nil) {
+	if(machine->args[0] == machine->nil) {
 		machine->result = machine->nil;
 	}
 	else {
@@ -285,6 +301,7 @@ sys_evlis:
 		machine->calling_func = SYS_EVLIS_0;
 		goto sys_eval;
 
+// SYS_EVLIS_0
 sys_evlis_eval_continue:
 		// Save the result so push 3 args
 		machine->args[2] = machine->result;
@@ -296,6 +313,7 @@ sys_evlis_eval_continue:
 		machine->calling_func = SYS_EVLIS_1;
 		goto sys_evlis;
 
+// SYS_EVLIS_1
 sys_evlis_evlis_continue:
 		
 		machine->result = cons(machine->args[2], machine->result);
@@ -309,15 +327,117 @@ sys_evlis_evlis_continue:
 			goto sys_evlis_evlis_continue;
 		default:
 	}
-// (define evlis
- //  (lambda (args env)
- //    (if (eq? args (quote ()))
- //        '()
- //        (cons (eval (car args) env)
- //              (evlis (cdr args) env)))))
+
+/***********************************************************
+ ************************* Evif ****************************
+ ***********************************************************/
+
 sys_evif:
+
+	push_system_args(4);
+	machine->args[0] = machine->args[0];
+	machine->args[1] = machine->args[3];
+
+	machine->calling_func = SYS_EVIF_0;
+	goto sys_eval;
+
+// SYS_EVIF_0
+sys_evif_eval_continue:
+
+	push_system_args(0);
+	if(machine->result != machine->nil) {
+		machine->args[0] = machine->args[1];
+		machine->args[1] = machine->args[3];
+
+		machine->calling_func = SYS_EVIF_1;
+		goto sys_eval;
+	}
+	else {
+		machine->args[0] = machine->args[2];
+		machine->args[1] = machine->args[3];
+
+		machine->calling_func = SYS_EVIF_1;
+		goto sys_eval;
+	}
+
+// SYS_EVIF_1
+sys_evif_return:
+	
+	pop_system_args();
+	switch(machine->calling_func) {
+		case SYS_EVAL_1:
+			goto sys_eval_return;
+		default:
+	}
+
+/***********************************************************
+ ************************* Conenv **************************
+ ***********************************************************/
+
 sys_conenv:
+
+	if(machine->args[0] != machine->nil) {
+		machine->result = machine->args[2];
+	}
+	else {
+		machine->args[3] = cons(machine->args[0]->car, machine->args[1]->car);
+		push_system_args(4);
+
+		machine->args[0] = machine->args[0]->cdr;
+		machine->args[1] = machine->args[1]->cdr;
+		machine->args[2] = machine->args[2];
+
+		machine->calling_func = SYS_CONENV_0;
+		goto sys_conenv;
+
+// SYS_CONENV_0
+sys_conenv_conenv_continue:
+
+		machine->result = cons(machine->args[3], machine->result);
+	}
+
+	pop_system_args();
+	switch(machine->calling_func) {
+		case SYS_APPLY_1:
+			goto sys_apply_conenv_continue;
+		case SYS_CONENV_0:
+			goto sys_conenv_conenv_continue;
+	}
+
+/***********************************************************
+ ************************* Lookup **************************
+ ***********************************************************/
+
 sys_lookup:
+
+	if(eq(machine->args[1]->car->car, machine->args[0])) {
+		machine->result = machine->args[1]->car->cdr;
+	}
+	else {
+		push_system_args(0);
+
+		machine->args[0] = machine->args[0];
+		machine->args[1] = machine->args[1]->cdr;
+
+		machine->calling_func = SYS_LOOKUP_0;
+		goto sys_lookup;
+	}
+
+// SYS_LOOKUP_0
+sys_lookup_return:
+
+	pop_system_args();
+	switch(machine->calling_func) {
+		case SYS_EVAL_1:
+			goto sys_eval_return;
+		case SYS_LOOKUP_0:
+			goto sys_lookup_return;
+		default:
+	}
+
+
+sys_execute_done:
+	return;
 }
 
 /*
