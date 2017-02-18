@@ -134,7 +134,7 @@ void execute() {
 	push_system_args(0);
 
 
-	machine->args[0] = make_expression("(eq? (quote a) (quote a))");
+	machine->args[0] = make_expression("(if (atom? (quote a)) (quote b) (quote c))");
 	machine->args[1] = make_expression("()");
 
 /***********************************************************
@@ -487,33 +487,26 @@ Cell * if_cond(Cell * pred, Cell * true_value, Cell * false_value) {
 
 Cell * eq(Cell * cell1, Cell * cell2) {
 
+	// Compare two nils
 	if(cell1 == machine->nil && cell2 == machine->nil) {
 		return NULL;
 	}
+	// Compare two symbols that aren't nil
 	else if (cell1 != machine->nil && cell2 != machine->nil) {
 
 		if(cell1->is_atom && cell2->is_atom) {
 
 			while(true) {
-				uintptr_t copy1 = (uintptr_t)cell1;
-				uintptr_t copy2 = (uintptr_t)cell2;
-
-				char name1[chars_per_pointer];
-				char name2[chars_per_pointer];
-
-				for(int i = chars_per_pointer - 1; i >= 0; --i) {
-					name1[i] = (char)(copy1);
-					name2[i] = (char)(copy2);
-
-					copy1 = copy1 >> 1;
-					copy2 = copy2 >> 2;
-				}
+				char * name1 = (char *)cell1;
+				char * name2 = (char *)cell2;
 
 				if(strcmp(name1, name2) == 0) {
+					// Both beginnings are the same. But we have more cells to examine
 					if(cdr(cell1) != NULL && cdr(cell2) != NULL) {
-						cell1 = cdr(cell1);
-						cell2 = cdr(cell2);
+						cell1 = cell1->cdr;
+						cell2 = cell2->cdr;
 					}
+					//	Both symbols are the same and don't have a cdr. They are eq
 					else if(cdr(cell1) == NULL && cdr(cell2) == NULL) {
 						return NULL;
 					}
@@ -521,6 +514,7 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 						return machine->nil;
 					}
 				}
+				// The strings aren't the same
 				else {
 					return machine->nil;
 				}
@@ -530,6 +524,7 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 			// Somehow report that the given arguments are not atomic
 		}
 	}
+	// We are comparing nil with a different symbol. They aren't eq
 	else {
 		return machine->nil;
 	}

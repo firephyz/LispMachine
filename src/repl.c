@@ -48,6 +48,12 @@ int main(int argc, char * argv[]) {
 
 void print_list(Cell *list) {
 
+	// NULL is true, machine->nil is false
+	if(list == NULL) {
+		printf("T\n");
+		return;
+	}
+
 	if(list->is_atom) {
 
 		// Handles the case when it is only the empty list
