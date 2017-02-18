@@ -83,7 +83,7 @@ void push_system_args(int arg_count) {
 	// Push arguments still needed for calling function
 	for(int i = 0; i < arg_count; ++i) {
 		Cell * cell = get_free_cell();
-		cell->car = machine->args[3 - i];
+		cell->car = machine->args[arg_count - i - 1];
 		cell->cdr = machine->sys_stack;
 		machine->sys_stack = cell;
 		++machine->sys_stack_size;
@@ -134,7 +134,7 @@ void execute() {
 	push_system_args(0);
 
 
-	machine->args[0] = make_expression("(quote a)");
+	machine->args[0] = make_expression("(eq? (quote a) (quote a))");
 	machine->args[1] = make_expression("()");
 
 /***********************************************************
@@ -142,14 +142,15 @@ void execute() {
  ***********************************************************/
 sys_eval:
 	if(machine->args[0]->is_atom) {
-		push_system_args(0);
 		machine->calling_func = SYS_EVAL_1;
+		push_system_args(0);
 		goto sys_lookup;
 	}
 	else {
 		switch(machine->args[0]->car->type) {
 			case SYS_SYM_IF:
 				// Push calling function
+				machine->calling_func = SYS_EVAL_1;
 				push_system_args(0);
 				// Setup arguments for next function
 				machine->args[3] = machine->args[1];
@@ -157,7 +158,6 @@ sys_eval:
 				machine->args[1] = machine->args[0]->cdr->cdr->car;
 				machine->args[2] = machine->args[0]->cdr->cdr->cdr->car;
 
-				machine->calling_func = SYS_EVAL_1;
 				goto sys_evif;
 			case SYS_SYM_LAMBDA:
 				machine->result = machine->args[0];
@@ -167,22 +167,22 @@ sys_eval:
 				break;
 			default:
 				// Push args for later access
+				machine->calling_func = SYS_EVAL_0;
 				push_system_args(2);
 				// Setup args for evlis
 				machine->args[0] = machine->args[0]->cdr;
 				machine->args[1] = machine->args[1];
 
-				machine->calling_func = SYS_EVAL_0;
 				goto sys_evlis;
 // SYS_EVAL_0
 sys_eval_evlis_continue:
+				machine->calling_func = SYS_EVAL_1;
 				push_system_args(0);
 				// Set up args for sys_apply
 				machine->args[0] = machine->args[0]->car;
 				machine->args[2] = machine->args[1];
 				machine->args[1] = machine->result;
 
-				machine->calling_func = SYS_EVAL_1;
 				goto sys_apply;
 		}
 	}
@@ -233,42 +233,43 @@ sys_apply:
 				// TODO
 				break;
 			default:
+				machine->calling_func = SYS_APPLY_0;
 				push_system_args(3);
 
 				machine->args[0] = machine->args[0];
 				machine->args[1] = machine->args[2];
 
-				machine->calling_func = SYS_APPLY_0;
 				goto sys_eval;
 
 // SYS_APPLY_0
 sys_apply_eval_continue:
+				machine->calling_func = SYS_APPLY_2;
 				push_system_args(0);
 
 				machine->args[0] = machine->result;
 				machine->args[1] = machine->args[1];
 				machine->args[2] = machine->args[2];
 
-				machine->calling_func = SYS_APPLY_2;
 				goto sys_apply;
 		}
 	}
 	else {
+		machine->calling_func = SYS_APPLY_1;
 		push_system_args(3);
 		machine->args[0] = machine->args[0]->cdr->car;
 		machine->args[1] = machine->args[1];
 		machine->args[2] = machine->args[2];
 
-		machine->calling_func = SYS_APPLY_1;
 		goto sys_conenv;
 
 // SYS_APPLY_1
 sys_apply_conenv_continue:
+		machine->calling_func = SYS_APPLY_2;
 		push_system_args(0);
+
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
 		machine->args[1] = machine->result;
 
-		machine->calling_func = SYS_APPLY_2;
 		goto sys_eval;
 	}
 
@@ -294,24 +295,24 @@ sys_evlis:
 		machine->result = machine->nil;
 	}
 	else {
+		machine->calling_func = SYS_EVLIS_0;
 		push_system_args(2);
 
 		machine->args[0] = machine->args[0]->car;
 		machine->args[1] = machine->args[1];
 
-		machine->calling_func = SYS_EVLIS_0;
 		goto sys_eval;
 
 // SYS_EVLIS_0
 sys_evlis_eval_continue:
 		// Save the result so push 3 args
+		machine->calling_func = SYS_EVLIS_1;
 		machine->args[2] = machine->result;
 		push_system_args(3);
 
 		machine->args[0] = machine->args[0]->cdr;
 		machine->args[1] = machine->args[1];
 
-		machine->calling_func = SYS_EVLIS_1;
 		goto sys_evlis;
 
 // SYS_EVLIS_1
@@ -333,30 +334,31 @@ sys_evlis_evlis_continue:
  ***********************************************************/
 
 sys_evif:
-
+	
+	machine->calling_func = SYS_EVIF_0;
 	push_system_args(4);
+
 	machine->args[0] = machine->args[0];
 	machine->args[1] = machine->args[3];
 
-	machine->calling_func = SYS_EVIF_0;
 	goto sys_eval;
 
 // SYS_EVIF_0
 sys_evif_eval_continue:
 
+	machine->calling_func = SYS_EVIF_1;
 	push_system_args(0);
+
 	if(machine->result != machine->nil) {
 		machine->args[0] = machine->args[1];
 		machine->args[1] = machine->args[3];
 
-		machine->calling_func = SYS_EVIF_1;
 		goto sys_eval;
 	}
 	else {
 		machine->args[0] = machine->args[2];
 		machine->args[1] = machine->args[3];
 
-		machine->calling_func = SYS_EVIF_1;
 		goto sys_eval;
 	}
 
@@ -379,6 +381,7 @@ sys_conenv:
 		machine->result = machine->args[2];
 	}
 	else {
+		machine->calling_func = SYS_CONENV_0;
 		machine->args[3] = cons(machine->args[0]->car, machine->args[1]->car);
 		push_system_args(4);
 
@@ -386,7 +389,6 @@ sys_conenv:
 		machine->args[1] = machine->args[1]->cdr;
 		machine->args[2] = machine->args[2];
 
-		machine->calling_func = SYS_CONENV_0;
 		goto sys_conenv;
 
 // SYS_CONENV_0
@@ -413,12 +415,12 @@ sys_lookup:
 		machine->result = machine->args[1]->car->cdr;
 	}
 	else {
+		machine->calling_func = SYS_LOOKUP_0;
 		push_system_args(0);
 
 		machine->args[0] = machine->args[0];
 		machine->args[1] = machine->args[1]->cdr;
 
-		machine->calling_func = SYS_LOOKUP_0;
 		goto sys_lookup;
 	}
 
