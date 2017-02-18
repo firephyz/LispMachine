@@ -31,8 +31,8 @@ Lisp_Machine * init_machine() {
 
 	// Setup the nil atom
 	machine->nil = get_free_cell();
-	machine->nil->car = NULL;
-	machine->nil->cdr = NULL;
+	machine->nil->car = machine->nil;
+	machine->nil->cdr = machine->nil;
 	machine->nil->is_atom = true;
 
 	// Initialize the supported instruction lists
@@ -134,7 +134,7 @@ void execute() {
 	push_system_args(0);
 
 
-	machine->args[0] = make_expression("(if (atom? (quote a)) (quote b) (quote c))");
+	machine->args[0] = make_expression("(if (atom? (quote (a))) (quote b) (quote c))");
 	machine->args[1] = make_expression("()");
 
 /***********************************************************
@@ -154,9 +154,9 @@ sys_eval:
 				push_system_args(0);
 				// Setup arguments for next function
 				machine->args[3] = machine->args[1];
-				machine->args[0] = machine->args[0]->cdr->car;
-				machine->args[1] = machine->args[0]->cdr->cdr->car;
 				machine->args[2] = machine->args[0]->cdr->cdr->cdr->car;
+				machine->args[1] = machine->args[0]->cdr->cdr->car;
+				machine->args[0] = machine->args[0]->cdr->car;
 
 				goto sys_evif;
 			case SYS_SYM_LAMBDA:
@@ -230,8 +230,9 @@ sys_apply:
 				machine->result = atom(machine->args[1]->car);
 				break;
 			case SYS_SYM_QUIT:
-				// TODO
-				break;
+				machine->result = make_expression("HALT");
+				printf("Program requested the machine to quit execution. Quiting...\n");
+				return;
 			default:
 				machine->calling_func = SYS_APPLY_0;
 				push_system_args(3);
@@ -377,7 +378,7 @@ sys_evif_return:
 
 sys_conenv:
 
-	if(machine->args[0] != machine->nil) {
+	if(machine->args[0] == machine->nil) {
 		machine->result = machine->args[2];
 	}
 	else {
@@ -411,7 +412,8 @@ sys_conenv_conenv_continue:
 
 sys_lookup:
 
-	if(eq(machine->args[1]->car->car, machine->args[0])) {
+	// NULL is true in this machine
+	if(eq(machine->args[1]->car->car, machine->args[0]) == NULL) {
 		machine->result = machine->args[1]->car->cdr;
 	}
 	else {

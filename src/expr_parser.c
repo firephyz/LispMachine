@@ -132,6 +132,11 @@ char * tokenizer_next(Tokenizer * tk) {
 		default:;
 			int symbol_length = index_of(tk->string + tk->index, "\t ()");
 
+			// Handle the case that we are just making a symbol
+			if(symbol_length == -1) {
+				symbol_length = strlen(tk->string);
+			}
+
 			if(symbol_length + 1 > tk->max_token_size) {
 				tk->token = realloc(tk->token, tk->max_token_size * 2);
 				tk->max_token_size *= 2;
