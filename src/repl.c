@@ -1,5 +1,7 @@
 /* To-Do
  *
+ * Implement more emulation facilities like memory accesses, cycle count, etc.
+ *
  * Consider lexical vs dynamics scoping
  *
  * Finish adding number support
@@ -162,6 +164,10 @@ void print_list(Cell *list) {
 		string[1] = '\n';
 		string[2] = '\0';
 	}
+	// Print number if it's a number
+	else if(list->type == SYS_SYM_NUM) {
+		sprintf(string, "%.*d\n", -MAX_PRINT_EXPR_LENGTH, (int)(uintptr_t)list->car);
+	}
 	else if(list->is_atom) {
 
 		// Handles the case when it is only the empty list
@@ -229,12 +235,20 @@ void print_list(Cell *list) {
 			}
 			// Print the symbol if it exists
 			else if(cell->car->is_atom) {
-				char * symbol = get_symbol_name(cell->car);
-				strncpy(string + index, symbol, MAX_PRINT_EXPR_LENGTH - index);
-				index += strlen(symbol);
-				free(symbol);
-				POP(s, Cell *, cell);
-				is_going_up = true;
+				// Print number if it's a number
+				if(cell->car->type == SYS_SYM_NUM) {
+					index += sprintf(string + index, "%.*d", -(MAX_PRINT_EXPR_LENGTH - index), (int)(uintptr_t)cell->car->car);
+					POP(s, Cell *, cell);
+					is_going_up = true;
+				}
+				else {
+					char * symbol = get_symbol_name(cell->car);
+					strncpy(string + index, symbol, MAX_PRINT_EXPR_LENGTH - index);
+					index += strlen(symbol);
+					free(symbol);
+					POP(s, Cell *, cell);
+					is_going_up = true;
+				}
 			}
 			// Traverse down
 			else {

@@ -173,7 +173,7 @@ Cell * make_symbol(char * name) {
 	Cell * result;
 
 	if(cell_type == SYS_SYM_NUM) {
-		return make_num(name);
+		result = make_num(name);
 	}
 	else {
 		Cell * prev_cell;
@@ -248,6 +248,7 @@ Cell * make_num(char * digits) {
 
 		// Store more of the number
 		cell->car = (Cell *)(uintptr_t)(num >> (sizeof(long) - (num_of_cells - i) * sizeof(Cell *)));
+		cell->cdr = NULL;
 	}
 
 	return result;

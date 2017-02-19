@@ -18,28 +18,32 @@
 	#define SYS_RETURN_RECORD 1
 
 	// System instructions
-	#define SYS_SYM_MULT	2
-	#define SYS_SYM_ADD		3
-	#define SYS_SYM_SUB		4
-	#define SYS_SYM_DIV		5
-	#define SYS_SYM_AND		6
-	#define SYS_SYM_ATOM 	7
-	#define SYS_SYM_CAR 	8
-	#define SYS_SYM_CDR		9
-	#define SYS_SYM_CONS	10
-	#define SYS_SYM_EQ 		11
-	#define SYS_SYM_FALSE	12
-	#define SYS_SYM_IF		13
-	#define SYS_SYM_LAMBDA	14
-	#define SYS_SYM_NOT		15
-	#define SYS_SYM_NULL	16
-	#define SYS_SYM_OR		17
-	#define SYS_SYM_QUIT	18
-	#define SYS_SYM_QUOTE	19
-	#define SYS_SYM_TRUE	20
+	#define SYS_SYM_MOD		2
+	#define SYS_SYM_MULT	3
+	#define SYS_SYM_ADD		4
+	#define SYS_SYM_SUB		5
+	#define SYS_SYM_DIV		6
+	#define SYS_SYM_LESS	7
+	#define SYS_SYM_EQUAL	8
+	#define SYS_SYM_GREAT	9
+	#define SYS_SYM_AND		10
+	#define SYS_SYM_ATOM 	11
+	#define SYS_SYM_CAR 	12
+	#define SYS_SYM_CDR		13
+	#define SYS_SYM_CONS	14
+	#define SYS_SYM_EQ 		15
+	#define SYS_SYM_FALSE	16
+	#define SYS_SYM_IF		17
+	#define SYS_SYM_LAMBDA	18
+	#define SYS_SYM_NOT		19
+	#define SYS_SYM_NULL	20
+	#define SYS_SYM_OR		21
+	#define SYS_SYM_QUIT	22
+	#define SYS_SYM_QUOTE	23
+	#define SYS_SYM_TRUE	24
 
 	// Self evaluating number
-	#define SYS_SYM_NUM		21
+	#define SYS_SYM_NUM		25
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.
@@ -52,19 +56,21 @@
 	#define SYS_EVLIS_1		6
 	#define SYS_EVIF_0		7
 	#define SYS_EVIF_1		8
-	#define SYS_CONENV_0	9
-	#define SYS_LOOKUP_0	10
-	#define SYS_REPL		11
+	#define SYS_EVARTH_0	9
+	#define SYS_CONENV_0	10
+	#define SYS_LOOKUP_0	11
+	#define SYS_REPL		12
 
 	#define SYSCALL(func)													\
 	do {																	\
 		if(runtime_info_flag) {												\
-			print_runtime_info(#func);											\
+			print_runtime_info(#func);										\
 			struct timespec t = {0, 200999999};								\
 			nanosleep(&t, NULL);											\
 		}																	\
 		goto func;															\
-	} while(0)
+	} while(0)																\
+
 
 	extern int chars_per_pointer;
 
@@ -77,32 +83,10 @@
 		Cell *cdr;
 		bool is_atom;
 		int type;
+
+		// Runtime information
+		bool is_fetched;
 	};
-
-	// ******************** Notice regarding the Evaluation Environment  *********************
-	// NOTICE:
-	// I have a choice in regards to the implementation of the evaluator environment.
-	// 1) I can used a simple association list. Fairly straight forward
-	// 		- Actually, this may not work. If evaluation arguments are found in
-	//			an A-list to be evaluated by the evaluator itself, then what stops
-	//			the infinitely recursive A-lists required for evaluation?
-	//		- One choice to resolve this is to not use the evaluator to self-evaluate
-	//			the A-lists.
-	// 2) I can instead use special registers for storing the addresses of lists
-	// 		necessary for the evaluation of a evaluation function.
-	// The current implementation will use method 2.
-
-	// *******************  Machine registers and atom evaluation rules *********************
-	/*
-	The machine keeps track of important lists necessary for evaluation.
-	$[func] - these are calls to the system evaluation functions (eval, apply, evlis, evif, conenv, lookup)
-	@[func] - Denotes a variable to be found in the system environment.
-				- These include:
-					expr (the current expression being evaluated)
-					env  (the current environment in which to evaluate the expression)
-					pred (the predicate used in the $[evif] evaluator function)
-	Everything else is split among the axiomatic functions (car, cdr, cons, eq?, atom?, if, quote, lambda)
-	*/
 
 	// ******************** Functions that should be present in the global environment *********************
 	// These functions won't actually be in the environment variable, they will instead be
@@ -129,6 +113,9 @@
 		Cell *free_mem;
 		Cell *nil;
 
+		int memory_access_count;
+		int cycle_count;
+
 		// System environment
 		// This serve as registers to hold the arguments to the evaluation functions
 		Cell * sys_stack;
@@ -143,7 +130,6 @@
 		// in actual hardware implementation.
 		Cell *args[4];
 		uint8_t calling_func;
-
 
 		int num_of_instrs;
 		void *instr_memory_block;	// The actual memory supporting the variable instructions.
@@ -165,6 +151,5 @@
 	Cell * quote(Cell * cell);
 	Cell * atom(Cell * cell);
 	Cell * eq(Cell * cell1, Cell * cell2);
-	Cell * if_cond(Cell * pred, Cell * true_value, Cell * false_value);
 
 #endif

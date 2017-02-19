@@ -37,11 +37,14 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("* + - / and atom? car cdr cons eq? false if lambda not null or quit quote true");
+	init_instr_list("%% * + - / < = > and atom? car cdr cons eq? false if lambda not null or quit quote true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
 	machine->sys_stack_size = 0;
+
+	machine->memory_access_count = 0;
+	machine->cycle_count = 0;
 
 	if(verbose_flag) {
 		printf("Machine initialized!\n");
@@ -144,7 +147,7 @@ void execute() {
 	// 	 (quote (o))									\
 	// 	 (quote (o o o)))									\
 	// ");
-	machine->args[0] = make_expression("(+ 1 1)");
+	machine->args[0] = make_expression("(if (= 2 1) (quote a) 2)");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -249,62 +252,136 @@ sys_eval_return:
 sys_apply:
 	
 	if(machine->args[0]->is_atom) {
-		switch(machine->args[0]->type) {
-			case SYS_SYM_CAR:
-				machine->result = machine->args[1]->car->car;
-				break;
-			case SYS_SYM_CDR:
-				machine->result = machine->args[1]->car->cdr;
-				break;
-			case SYS_SYM_CONS:
-				machine->result = cons(machine->args[1]->car, machine->args[1]->cdr->car);
-				break;
-			case SYS_SYM_EQ:
-				machine->result = eq(machine->args[1]->car, machine->args[1]->cdr->car);
-				break;
-			case SYS_SYM_ATOM:
-				machine->result = atom(machine->args[1]->car);
-				break;
-			case SYS_SYM_QUIT:
-				machine->result = make_expression("HALT");
-				printf("Program requested the machine to quit execution. Quiting...\n");
-				return;
-			case SYS_SYM_ADD:;
-				Cell * result = get_free_cell();
-				result->car = (Cell *)((uintptr_t)machine->args[0]->cdr->car + (uintptr_t)machine->args[0]->cdr->cdr->car);
-				result->cdr = NULL;
-				result->type = SYS_SYM_NUM;
-				result->is_atom = true;
-				machine->result = result;
-				break;
-			case SYS_SYM_SUB:
-			case SYS_SYM_MULT:
-			case SYS_SYM_DIV:
-			case SYS_SYM_AND:
-			case SYS_SYM_OR:
-			case SYS_SYM_NOT:
-			default:
-				machine->calling_func = SYS_APPLY_0;
-				push_system_args(3);
+		// Arithmetic operation with multiple args
+		if(machine->args[0]->type >= SYS_SYM_MOD && machine->args[0]->type <= SYS_SYM_DIV) {
+			machine->calling_func = SYS_APPLY_2;
+			push_system_args(0);
 
-				machine->args[0] = machine->args[0];
-				machine->args[1] = machine->args[2];
-				machine->args[2] = machine->nil;
-				machine->args[3] = machine->nil;
+			machine->args[0] = machine->args[0];
+			machine->args[1] = machine->args[1];
+			machine->args[2] = get_free_cell();
+			machine->args[3] = machine->nil;
 
-				SYSCALL(sys_eval);
+			// Setup the starting arguments based on the operation
+			switch(machine->args[0]->type) {
+				case SYS_SYM_MULT:
+					machine->args[2]->car = (Cell *)1;
+					break;
+				case SYS_SYM_ADD:
+					machine->args[2]->car = (Cell *)0;
+					break;
+				case SYS_SYM_SUB:
+					machine->args[2]->car = machine->args[1]->car->car;
+					machine->args[1] = machine->args[1]->cdr;
+					break;
+				case SYS_SYM_DIV:
+					machine->args[2]->car = machine->args[1]->car->car;
+					machine->args[1] = machine->args[1]->cdr;
+					break;
+				case SYS_SYM_MOD:
+					machine->args[2]->car = machine->args[1]->car->car;
+					machine->args[1] = machine->args[1]->cdr;
+					break;
+			}
+
+			machine->args[2]->cdr = NULL;
+			machine->args[2]->is_atom = true;
+			machine->args[2]->type = SYS_SYM_NUM;
+
+			SYSCALL(sys_evarth);
+		}
+		else {
+			switch(machine->args[0]->type) {
+				case SYS_SYM_CAR:
+					machine->result = machine->args[1]->car->car;
+					break;
+				case SYS_SYM_CDR:
+					machine->result = machine->args[1]->car->cdr;
+					break;
+				case SYS_SYM_CONS:
+					machine->result = cons(machine->args[1]->car, machine->args[1]->cdr->car);
+					break;
+				case SYS_SYM_EQ:
+					machine->result = eq(machine->args[1]->car, machine->args[1]->cdr->car);
+					break;
+				case SYS_SYM_ATOM:
+					machine->result = atom(machine->args[1]->car);
+					break;
+				case SYS_SYM_QUIT:
+					machine->result = make_expression("HALT");
+					printf("Program requested the machine to quit execution. Quiting...\n");
+					return;
+				case SYS_SYM_LESS:
+					if(machine->args[1]->car->car < machine->args[1]->cdr->car->car) {
+						machine->result = NULL;
+					}
+					else {
+						machine->result = machine->nil;
+					}
+					break;
+				case SYS_SYM_EQUAL:
+					if(machine->args[1]->car->car == machine->args[1]->cdr->car->car) {
+						machine->result = NULL;
+					}
+					else {
+						machine->result = machine->nil;
+					}
+					break;
+				case SYS_SYM_GREAT:
+					if(machine->args[1]->car->car > machine->args[1]->cdr->car->car) {
+						machine->result = NULL;
+					}
+					else {
+						machine->result = machine->nil;
+					}
+					break;
+				case SYS_SYM_AND:
+					if(machine->args[1]->car->car == NULL && machine->args[1]->cdr->car->car == NULL) {
+						machine->result = NULL;
+					}
+					else {
+						machine->result = machine->nil;
+					}
+					break;
+				case SYS_SYM_OR:
+					if(machine->args[1]->car->car == NULL || machine->args[1]->cdr->car->car == NULL) {
+						machine->result = NULL;
+					}
+					else {
+						machine->result = machine->nil;
+					}
+					break;
+				case SYS_SYM_NOT:
+					if(machine->args[1]->car->car == NULL) {
+						machine->result = machine->nil;
+					}
+					else {
+						machine->result = NULL;
+					}
+					break;
+				default:
+					machine->calling_func = SYS_APPLY_0;
+					push_system_args(3);
+
+					machine->args[0] = machine->args[0];
+					machine->args[1] = machine->args[2];
+					machine->args[2] = machine->nil;
+					machine->args[3] = machine->nil;
+
+					SYSCALL(sys_eval);
 
 // SYS_APPLY_0
 sys_apply_eval_continue:
-				machine->calling_func = SYS_APPLY_2;
-				push_system_args(0);
+					machine->calling_func = SYS_APPLY_2;
+					push_system_args(0);
 
-				machine->args[0] = machine->result;
-				machine->args[1] = machine->args[1];
-				machine->args[2] = machine->args[2];
-				machine->args[3] = machine->nil;
+					machine->args[0] = machine->result;
+					machine->args[1] = machine->args[1];
+					machine->args[2] = machine->args[2];
+					machine->args[3] = machine->nil;
 
-				SYSCALL(sys_apply);
+					SYSCALL(sys_apply);
+			}
 		}
 	}
 	else {
@@ -437,6 +514,50 @@ sys_evif_return:
 		case SYS_EVAL_1:
 			goto sys_eval_return;
 	}
+
+/***********************************************************
+ ************************* Evarth **************************
+ ***********************************************************/
+
+ sys_evarth:
+ 	if(machine->args[1] == machine->nil) {
+ 		machine->result = machine->args[2];
+ 	}
+ 	else {
+ 		machine->calling_func = SYS_EVARTH_0;
+ 		push_system_args(0);
+
+ 		machine->args[0] = machine->args[0];
+ 		switch(machine->args[0]->type) {
+ 			case SYS_SYM_MULT:
+ 				machine->args[2]->car = (Cell *)((uintptr_t)machine->args[2]->car * (uintptr_t)machine->args[1]->car->car);
+ 				break;
+ 			case SYS_SYM_ADD:
+ 				machine->args[2]->car = (Cell *)((uintptr_t)machine->args[2]->car + (uintptr_t)machine->args[1]->car->car);
+ 				break;
+ 			case SYS_SYM_SUB:
+ 				machine->args[2]->car = (Cell *)((uintptr_t)machine->args[2]->car - (uintptr_t)machine->args[1]->car->car);
+ 				break;
+ 			case SYS_SYM_DIV:
+ 				machine->args[2]->car = (Cell *)((uintptr_t)machine->args[2]->car / (uintptr_t)machine->args[1]->car->car);
+ 				break;
+ 			case SYS_SYM_MOD:
+ 				machine->args[2]->car = (Cell *)((uintptr_t)machine->args[2]->car % (uintptr_t)machine->args[1]->car->car);
+ 				break;
+ 		}
+ 		machine->args[1] = machine->args[1]->cdr;
+
+ 		SYSCALL(sys_evarth);
+ 	}
+
+sys_evarth_return:
+ 	pop_system_args();
+ 	switch(machine->calling_func) {
+ 		case SYS_APPLY_2:
+ 			goto sys_apply_return;
+ 		case SYS_EVARTH_0:
+ 			goto sys_evarth_return;
+ 	}
 
 /***********************************************************
  ************************* Conenv **************************
