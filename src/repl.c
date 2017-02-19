@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	if(runtime_info_flag) {
-		for(int i = 0; i < RUNTIME_LINES; ++i) {
+		for(int i = 0; i < RUNTIME_LINES + MAX_PRINT_STACK_DEPTH; ++i) {
 			printf("\n");
 		}
 	}
@@ -53,15 +53,18 @@ int main(int argc, char * argv[]) {
 }
 
 void print_runtime_info(char * func) {
+
+	int max_stack_depth = MAX_PRINT_STACK_DEPTH;
+
 	// Clear 
-	printf("\033[%dA", RUNTIME_LINES);
-	for(int i = 0; i < RUNTIME_LINES; ++i) {
+	printf("\033[%dA", RUNTIME_LINES + max_stack_depth);
+	for(int i = 0; i < RUNTIME_LINES + max_stack_depth; ++i) {
 		for(int j = 0; j < MAX_PRINT_EXPR_LENGTH + 15; ++j) {
 			printf(" ");
 		}
 		printf("\n");
 	}
-	printf("\033[%dA", RUNTIME_LINES);
+	printf("\033[%dA", RUNTIME_LINES + max_stack_depth);
 	printf("In Use: %-10d\n", machine->mem_used);
 	printf("Stack Depth: %-10d\n", machine->sys_stack_size);
 	printf("\n");
@@ -76,6 +79,62 @@ void print_runtime_info(char * func) {
 	print_list(machine->args[3]);
 	printf("Result: ");
 	print_list(machine->result);
+	printf("\n");
+	int index = 0;
+	Cell * stack = machine->sys_stack;
+	while(index < max_stack_depth) {
+
+		if(stack == machine->nil) {
+			for(int i = 0; i < max_stack_depth - index; ++i) {
+				printf("\n");
+			}
+			break;
+		}
+
+		if(stack->type == SYS_RETURN_RECORD) {
+			switch((int)(uintptr_t)stack->car) {
+				case SYS_REPL:
+					printf("%s\n", "repl");
+					break;
+				case SYS_EVAL_0:
+					printf("%s\n", "eval");
+					break;
+				case SYS_EVAL_1:
+					printf("%s\n", "eval");
+					break;
+				case SYS_APPLY_0:
+					printf("%s\n", "apply");
+					break;
+				case SYS_APPLY_1:
+					printf("%s\n", "apply");
+					break;
+				case SYS_APPLY_2:
+					printf("%s\n", "apply");
+					break;
+				case SYS_EVLIS_0:
+					printf("%s\n", "evlis");
+					break;
+				case SYS_EVLIS_1:
+					printf("%s\n", "evlis");
+					break;
+				case SYS_EVIF_0:
+					printf("%s\n", "evif");
+					break;
+				case SYS_EVIF_1:
+					printf("%s\n", "evif");
+					break;
+				case SYS_CONENV_0:
+					printf("%s\n", "conenv");
+					break;
+				case SYS_LOOKUP_0:
+					printf("%s\n", "lookup");
+					break;
+			}
+			++index;
+		}
+		
+		stack = stack->cdr;
+	}
 }
 
 void print_list(Cell *list) {

@@ -4,8 +4,9 @@
 	#include <stdbool.h>
 	#include "lisp_machine.h"
 
-	#define RUNTIME_LINES 9
+	#define RUNTIME_LINES 10
 	#define MAX_PRINT_EXPR_LENGTH 80
+	#define MAX_PRINT_STACK_DEPTH 20
 
 	extern bool quiet_flag;
 	extern bool runtime_info_flag;

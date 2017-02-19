@@ -142,7 +142,7 @@ void execute() {
 		       a 										\
 		       (adder (cons (quote o) a) (cdr b))))		\
 		 (quote (o))									\
-		 (quote (o)))									\
+		 (quote (o o o)))									\
 	");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
