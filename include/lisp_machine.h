@@ -3,7 +3,7 @@
 
 	#include <stdint.h>
 	#include <stdbool.h>
-	#include <unistd.h>
+	#include <time.h>
 	#include "stack.h"
 
 	#define NUM_OF_CELLS 65536
@@ -46,13 +46,14 @@
 	#define SYS_LOOKUP_0	10
 	#define SYS_REPL		11
 
-	#define SYSCALL(func)												\
-	do {																\
-		printf("Func: %s\n", #func);									\
-		printf("In Use: %d", machine->mem_used);						\
-		printf("Stack Depth: %d\033[2A", machine->sys_stack_size);		\
-		usleep(1000);													\
-		goto func;														\
+	#define SYSCALL(func)													\
+	do {																	\
+		if(runtime_info_flag) {												\
+			print_runtime_info(#func);											\
+			struct timespec t = {0, 200999999};								\
+			nanosleep(&t, NULL);											\
+		}																	\
+		goto func;															\
 	} while(0)
 
 	extern int chars_per_pointer;

@@ -6,10 +6,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 
 int chars_per_pointer = sizeof(uintptr_t) / sizeof(char);
-bool verbose_flag;
 Lisp_Machine * machine;
 
 Lisp_Machine * init_machine() {
@@ -135,17 +133,37 @@ void execute() {
 	push_system_args(0);
 
 
-	machine->args[0] = make_expression("(if (atom? (quote (a))) (quote b) (quote c))");
+	//machine->args[0] = make_expression("((lambda (x) x)(if (atom? (quote (a))) (quote b) (quote c)))");
+	machine->args[0] = make_expression("				\
+		((lambda (adder a b)							\
+		   (adder a b))									\
+		 (lambda (a b)									\
+		   (if (eq? b null)								\
+		       a 										\
+		       (adder (cons (quote o) a) (cdr b))))		\
+		 (quote (o))									\
+		 (quote (o)))									\
+	");
 	machine->args[1] = make_expression("()");
+	machine->args[2] = machine->nil;
+	machine->args[3] = machine->nil;
+	machine->result = machine->nil;
 
 /***********************************************************
  ************************* Eval ****************************
  ***********************************************************/
 sys_eval:
 	if(machine->args[0]->is_atom) {
-		machine->calling_func = SYS_EVAL_1;
-		push_system_args(0);
-		SYSCALL(sys_lookup);
+		if(machine->args[0]->type == SYS_SYM_NULL) {
+			machine->result = machine->nil;
+		}
+		else {
+			machine->calling_func = SYS_EVAL_1;
+			push_system_args(0);
+			machine->args[0] = machine->args[0];
+			machine->args[1] = machine->args[1];
+			SYSCALL(sys_lookup);
+		}
 	}
 	else {
 		switch(machine->args[0]->car->type) {
@@ -173,6 +191,8 @@ sys_eval:
 				// Setup args for evlis
 				machine->args[0] = machine->args[0]->cdr;
 				machine->args[1] = machine->args[1];
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
 
 				SYSCALL(sys_evlis);
 // SYS_EVAL_0
@@ -183,6 +203,7 @@ sys_eval_evlis_continue:
 				machine->args[0] = machine->args[0]->car;
 				machine->args[2] = machine->args[1];
 				machine->args[1] = machine->result;
+				machine->args[3] = machine->nil;
 
 				SYSCALL(sys_apply);
 		}
@@ -240,6 +261,8 @@ sys_apply:
 
 				machine->args[0] = machine->args[0];
 				machine->args[1] = machine->args[2];
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
 
 				SYSCALL(sys_eval);
 
@@ -251,6 +274,7 @@ sys_apply_eval_continue:
 				machine->args[0] = machine->result;
 				machine->args[1] = machine->args[1];
 				machine->args[2] = machine->args[2];
+				machine->args[3] = machine->nil;
 
 				SYSCALL(sys_apply);
 		}
@@ -261,6 +285,7 @@ sys_apply_eval_continue:
 		machine->args[0] = machine->args[0]->cdr->car;
 		machine->args[1] = machine->args[1];
 		machine->args[2] = machine->args[2];
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_conenv);
 
@@ -271,6 +296,8 @@ sys_apply_conenv_continue:
 
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
 		machine->args[1] = machine->result;
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_eval);
 	}
@@ -302,6 +329,8 @@ sys_evlis:
 
 		machine->args[0] = machine->args[0]->car;
 		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_eval);
 
@@ -314,6 +343,8 @@ sys_evlis_eval_continue:
 
 		machine->args[0] = machine->args[0]->cdr;
 		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_evlis);
 
@@ -342,6 +373,8 @@ sys_evif:
 
 	machine->args[0] = machine->args[0];
 	machine->args[1] = machine->args[3];
+	machine->args[2] = machine->nil;
+	machine->args[3] = machine->nil;
 
 	SYSCALL(sys_eval);
 
@@ -354,12 +387,16 @@ sys_evif_eval_continue:
 	if(machine->result != machine->nil) {
 		machine->args[0] = machine->args[1];
 		machine->args[1] = machine->args[3];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_eval);
 	}
 	else {
 		machine->args[0] = machine->args[2];
 		machine->args[1] = machine->args[3];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_eval);
 	}
@@ -390,6 +427,7 @@ sys_conenv:
 		machine->args[0] = machine->args[0]->cdr;
 		machine->args[1] = machine->args[1]->cdr;
 		machine->args[2] = machine->args[2];
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_conenv);
 
@@ -423,6 +461,8 @@ sys_lookup:
 
 		machine->args[0] = machine->args[0];
 		machine->args[1] = machine->args[1]->cdr;
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_lookup);
 	}
