@@ -1,5 +1,14 @@
 /* To-Do
  *
+ * Consider lexical vs dynamics scoping
+ *
+ * Finish adding number support
+ *
+ * Add input and output
+ *
+ * Add function definitions?
+ *
+ * Think about how the machine will compile expressions given as strings
  *
  * Fix the make_expression function so that there is less redundancy in code (and make for elegant)
  */
@@ -54,17 +63,17 @@ int main(int argc, char * argv[]) {
 
 void print_runtime_info(char * func) {
 
-	int max_stack_depth = MAX_PRINT_STACK_DEPTH;
-
-	// Clear 
-	printf("\033[%dA", RUNTIME_LINES + max_stack_depth);
-	for(int i = 0; i < RUNTIME_LINES + max_stack_depth; ++i) {
+	// Clear previous print
+	printf("\033[%dA", RUNTIME_LINES + MAX_PRINT_STACK_DEPTH);
+	for(int i = 0; i < RUNTIME_LINES + MAX_PRINT_STACK_DEPTH; ++i) {
 		for(int j = 0; j < MAX_PRINT_EXPR_LENGTH + 15; ++j) {
 			printf(" ");
 		}
 		printf("\n");
 	}
-	printf("\033[%dA", RUNTIME_LINES + max_stack_depth);
+
+	// Print runtime info
+	printf("\033[%dA", RUNTIME_LINES + MAX_PRINT_STACK_DEPTH);
 	printf("In Use: %-10d\n", machine->mem_used);
 	printf("Stack Depth: %-10d\n", machine->sys_stack_size);
 	printf("\n");
@@ -80,12 +89,18 @@ void print_runtime_info(char * func) {
 	printf("Result: ");
 	print_list(machine->result);
 	printf("\n");
+
+	print_runtime_stack();
+}
+
+void print_runtime_stack() {
+
 	int index = 0;
 	Cell * stack = machine->sys_stack;
-	while(index < max_stack_depth) {
+	while(index < MAX_PRINT_STACK_DEPTH) {
 
 		if(stack == machine->nil) {
-			for(int i = 0; i < max_stack_depth - index; ++i) {
+			for(int i = 0; i < MAX_PRINT_STACK_DEPTH - index; ++i) {
 				printf("\n");
 			}
 			break;

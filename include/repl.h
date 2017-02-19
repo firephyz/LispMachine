@@ -17,5 +17,6 @@
 	void process_args(int argc, char * argv[]);
 	void print_list(Cell *cell);
 	void print_runtime_info();
+	void print_runtime_stack();
 
 #endif

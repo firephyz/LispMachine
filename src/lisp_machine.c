@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("atom? car cdr cons eq? false if lambda null quit quote true");
+	init_instr_list("* + - / and atom? car cdr cons eq? false if lambda not null or quit quote true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -134,16 +134,17 @@ void execute() {
 
 
 	//machine->args[0] = make_expression("((lambda (x) x)(if (atom? (quote (a))) (quote b) (quote c)))");
-	machine->args[0] = make_expression("				\
-		((lambda (adder a b)							\
-		   (adder a b))									\
-		 (lambda (a b)									\
-		   (if (eq? b null)								\
-		       a 										\
-		       (adder (cons (quote o) a) (cdr b))))		\
-		 (quote (o))									\
-		 (quote (o o o)))									\
-	");
+	// machine->args[0] = make_expression("				\
+	// 	((lambda (adder a b)							\
+	// 	   (adder a b))									\
+	// 	 (lambda (a b)									\
+	// 	   (if (eq? b null)								\
+	// 	       a 										\
+	// 	       (adder (cons (quote o) a) (cdr b))))		\
+	// 	 (quote (o))									\
+	// 	 (quote (o o o)))									\
+	// ");
+	machine->args[0] = make_expression("(+ 1 1)");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -154,15 +155,28 @@ void execute() {
  ***********************************************************/
 sys_eval:
 	if(machine->args[0]->is_atom) {
-		if(machine->args[0]->type == SYS_SYM_NULL) {
-			machine->result = machine->nil;
-		}
-		else {
+		if(machine->args[0]->type == SYS_GENERAL) {
 			machine->calling_func = SYS_EVAL_1;
 			push_system_args(0);
 			machine->args[0] = machine->args[0];
 			machine->args[1] = machine->args[1];
 			SYSCALL(sys_lookup);
+		}
+		else {
+			switch(machine->args[0]->type) {
+				case SYS_SYM_NULL:
+					machine->result = machine->nil;
+					break;
+				case SYS_SYM_FALSE:
+					machine->result = machine->nil;
+					break;
+				case SYS_SYM_TRUE:
+					machine->result = NULL;
+					break;
+				case SYS_SYM_NUM:
+					machine->result = machine->args[0];
+					break;
+			}
 		}
 	}
 	else {
@@ -255,6 +269,20 @@ sys_apply:
 				machine->result = make_expression("HALT");
 				printf("Program requested the machine to quit execution. Quiting...\n");
 				return;
+			case SYS_SYM_ADD:;
+				Cell * result = get_free_cell();
+				result->car = (Cell *)((uintptr_t)machine->args[0]->cdr->car + (uintptr_t)machine->args[0]->cdr->cdr->car);
+				result->cdr = NULL;
+				result->type = SYS_SYM_NUM;
+				result->is_atom = true;
+				machine->result = result;
+				break;
+			case SYS_SYM_SUB:
+			case SYS_SYM_MULT:
+			case SYS_SYM_DIV:
+			case SYS_SYM_AND:
+			case SYS_SYM_OR:
+			case SYS_SYM_NOT:
 			default:
 				machine->calling_func = SYS_APPLY_0;
 				push_system_args(3);

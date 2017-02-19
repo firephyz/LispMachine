@@ -18,20 +18,30 @@
 	#define SYS_RETURN_RECORD 1
 
 	// System instructions
-	#define SYS_SYM_ATOM 	2
-	#define SYS_SYM_CAR 	3
-	#define SYS_SYM_CDR		4
-	#define SYS_SYM_CONS	5
-	#define SYS_SYM_EQ 		6
-	#define SYS_SYM_FALSE	7		
-	#define SYS_SYM_IF		8
-	#define SYS_SYM_LAMBDA	9
-	#define SYS_SYM_NULL	10
-	#define SYS_SYM_QUIT	11
-	#define SYS_SYM_QUOTE	12
-	#define SYS_SYM_TRUE	13
-	/********************************* End Cell Types ***************************/
+	#define SYS_SYM_MULT	2
+	#define SYS_SYM_ADD		3
+	#define SYS_SYM_SUB		4
+	#define SYS_SYM_DIV		5
+	#define SYS_SYM_AND		6
+	#define SYS_SYM_ATOM 	7
+	#define SYS_SYM_CAR 	8
+	#define SYS_SYM_CDR		9
+	#define SYS_SYM_CONS	10
+	#define SYS_SYM_EQ 		11
+	#define SYS_SYM_FALSE	12
+	#define SYS_SYM_IF		13
+	#define SYS_SYM_LAMBDA	14
+	#define SYS_SYM_NOT		15
+	#define SYS_SYM_NULL	16
+	#define SYS_SYM_OR		17
+	#define SYS_SYM_QUIT	18
+	#define SYS_SYM_QUOTE	19
+	#define SYS_SYM_TRUE	20
 
+	// Self evaluating number
+	#define SYS_SYM_NUM		21
+
+	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.
 	#define SYS_EVAL_0		0
 	#define SYS_EVAL_1		1

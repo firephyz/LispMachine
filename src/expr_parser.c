@@ -170,37 +170,42 @@ int index_of(char * string, char * targets) {
 Cell * make_symbol(char * name) {
 
 	uint8_t cell_type = determine_symbol_type(name);
-
 	Cell * result;
-	Cell * prev_cell;
-	int num_of_cells = (strlen(name) + chars_per_pointer - 1) / chars_per_pointer;
 
-	// Iterate through the chain of cells we will use to store the name
-	for(int cell_index = 0; cell_index < num_of_cells; ++cell_index) {
+	if(cell_type == SYS_SYM_NUM) {
+		return make_num(name);
+	}
+	else {
+		Cell * prev_cell;
+		int num_of_cells = (strlen(name) + chars_per_pointer - 1) / chars_per_pointer;
 
-		Cell * new_cell = get_free_cell();
+		// Iterate through the chain of cells we will use to store the name
+		for(int cell_index = 0; cell_index < num_of_cells; ++cell_index) {
 
-		// Do required linking between the cells
-		if(cell_index == 0) {
-			result = new_cell;
-			prev_cell = result;
-		}
-		else {
-			prev_cell->cdr = new_cell;
-			prev_cell = new_cell;
-		}
+			Cell * new_cell = get_free_cell();
 
-		// Split up and copy the given string into the cells
-		for(int i = chars_per_pointer - 1; i >= 0; --i) {
-
-			int index = (cell_index * chars_per_pointer) + i;
-
-			if(index >= strlen(name)) {
-				new_cell->car = (Cell *)((uintptr_t)car(new_cell) << 8);
-				continue;
+			// Do required linking between the cells
+			if(cell_index == 0) {
+				result = new_cell;
+				prev_cell = result;
 			}
 			else {
-				new_cell->car = (Cell *)(((uintptr_t)car(new_cell) << 8) | (uintptr_t)name[index]);
+				prev_cell->cdr = new_cell;
+				prev_cell = new_cell;
+			}
+
+			// Split up and copy the given string into the cells
+			for(int i = chars_per_pointer - 1; i >= 0; --i) {
+
+				int index = (cell_index * chars_per_pointer) + i;
+
+				if(index >= strlen(name)) {
+					new_cell->car = (Cell *)((uintptr_t)car(new_cell) << 8);
+					continue;
+				}
+				else {
+					new_cell->car = (Cell *)(((uintptr_t)car(new_cell) << 8) | (uintptr_t)name[index]);
+				}
 			}
 		}
 	}
@@ -211,9 +216,50 @@ Cell * make_symbol(char * name) {
 	return result;
 }
 
+// Currently very limited.
+// Doesn't support bignums or check if the number will be larger than a long type
+Cell * make_num(char * digits) {
+
+	long num = 0;
+
+	for(int i = 0; i < strlen(digits); ++i) {
+		num *= 10;
+		num += digits[i] - '0';
+	}
+
+	int num_of_cells = sizeof(long) / sizeof(Cell *);
+
+	Cell * result;
+	Cell * prev_cell;
+
+	for(int i = 0; i < num_of_cells; ++i) {
+
+		Cell * cell = get_free_cell();
+
+		// Do the linking between cells
+		if(i == 0) {
+			result = cell;
+			prev_cell = result;
+		}
+		else {
+			prev_cell->cdr = cell;
+			prev_cell = cell;
+		}
+
+		// Store more of the number
+		cell->car = (Cell *)(uintptr_t)(num >> (sizeof(long) - (num_of_cells - i) * sizeof(Cell *)));
+	}
+
+	return result;
+}
+
 // Performs a binary search on the strings in machine->instructions to locate
 // a machine instruction.
 uint8_t determine_symbol_type(char * name) {
+
+	if(name[0] >= '0' && name[0] <= '9') {
+		return SYS_SYM_NUM;
+	}
 
 	uint8_t result = SYS_GENERAL;
 

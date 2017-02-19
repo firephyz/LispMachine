@@ -17,6 +17,7 @@
 	Cell * make_expression(char *expr);
 	int index_of(char * string, char * targets);
 	Cell * make_symbol(char * name);
+	Cell * make_num(char * digits);
 	char * get_symbol_name(Cell * sym);
 	uint8_t determine_symbol_type(char * name);
 
