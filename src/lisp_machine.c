@@ -147,7 +147,15 @@ void execute() {
 	// 	 (quote (o))									\
 	// 	 (quote (o o o)))									\
 	// ");
-	machine->args[0] = make_expression("(if (= 2 1) (quote a) 2)");
+	machine->args[0] = make_expression("		\
+		((lambda (fact x result)				\
+		   (fact x result))						\
+		 (lambda (x result)						\
+		   (if (< x 2)							\
+		       result							\
+		       (fact (- x 1) (* result x))))	\
+		 10 1)									\
+		");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -336,7 +344,7 @@ sys_apply:
 					}
 					break;
 				case SYS_SYM_AND:
-					if(machine->args[1]->car->car == NULL && machine->args[1]->cdr->car->car == NULL) {
+					if(machine->args[1]->car == NULL && machine->args[1]->cdr->car == NULL) {
 						machine->result = NULL;
 					}
 					else {
@@ -344,7 +352,7 @@ sys_apply:
 					}
 					break;
 				case SYS_SYM_OR:
-					if(machine->args[1]->car->car == NULL || machine->args[1]->cdr->car->car == NULL) {
+					if(machine->args[1]->car == NULL || machine->args[1]->cdr->car == NULL) {
 						machine->result = NULL;
 					}
 					else {
@@ -352,7 +360,7 @@ sys_apply:
 					}
 					break;
 				case SYS_SYM_NOT:
-					if(machine->args[1]->car->car == NULL) {
+					if(machine->args[1]->car == NULL) {
 						machine->result = machine->nil;
 					}
 					else {

@@ -4,7 +4,7 @@
  *
  * Consider lexical vs dynamics scoping
  *
- * Finish adding number support
+ * Fix the evaluator so that SYSCALL's are tail recursive.
  *
  * Add input and output
  *
@@ -233,16 +233,28 @@ void print_list(Cell *list) {
 					}
 				}
 			}
-			// Print the symbol if it exists
-			else if(cell->car->is_atom) {
+			else if (cell->is_atom || cell->car->is_atom) {
+				Cell * sym_cell = cell;
+
+				// We have a pair of atoms
+				if(cell->is_atom) {
+					string[index] = '.';
+					string[index + 1] = ' ';
+					index += 2;
+				}
+				// Otherwise we have an atom followed by a list
+				else {
+					sym_cell = sym_cell->car;
+				}
+
 				// Print number if it's a number
-				if(cell->car->type == SYS_SYM_NUM) {
-					index += sprintf(string + index, "%.*d", -(MAX_PRINT_EXPR_LENGTH - index), (int)(uintptr_t)cell->car->car);
+				if(sym_cell->type == SYS_SYM_NUM) {
+					index += sprintf(string + index, "%.*d", -(MAX_PRINT_EXPR_LENGTH - index), (int)(uintptr_t)sym_cell->car);
 					POP(s, Cell *, cell);
 					is_going_up = true;
 				}
 				else {
-					char * symbol = get_symbol_name(cell->car);
+					char * symbol = get_symbol_name(sym_cell);
 					strncpy(string + index, symbol, MAX_PRINT_EXPR_LENGTH - index);
 					index += strlen(symbol);
 					free(symbol);
