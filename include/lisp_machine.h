@@ -3,6 +3,7 @@
 
 	#include <stdint.h>
 	#include <stdbool.h>
+	#include <unistd.h>
 	#include "stack.h"
 
 	#define NUM_OF_CELLS 65536
@@ -22,7 +23,7 @@
 	#define SYS_SYM_CDR		4
 	#define SYS_SYM_CONS	5
 	#define SYS_SYM_EQ 		6
-	#define SYS_SYM_FALSE	7
+	#define SYS_SYM_FALSE	7		
 	#define SYS_SYM_IF		8
 	#define SYS_SYM_LAMBDA	9
 	#define SYS_SYM_NULL	10
@@ -44,6 +45,15 @@
 	#define SYS_CONENV_0	9
 	#define SYS_LOOKUP_0	10
 	#define SYS_REPL		11
+
+	#define SYSCALL(func)												\
+	do {																\
+		printf("Func: %s\n", #func);									\
+		printf("In Use: %d", machine->mem_used);						\
+		printf("Stack Depth: %d\033[2A", machine->sys_stack_size);		\
+		usleep(1000);													\
+		goto func;														\
+	} while(0)
 
 	extern int chars_per_pointer;
 

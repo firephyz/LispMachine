@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 int chars_per_pointer = sizeof(uintptr_t) / sizeof(char);
 bool verbose_flag;
@@ -144,7 +145,7 @@ sys_eval:
 	if(machine->args[0]->is_atom) {
 		machine->calling_func = SYS_EVAL_1;
 		push_system_args(0);
-		goto sys_lookup;
+		SYSCALL(sys_lookup);
 	}
 	else {
 		switch(machine->args[0]->car->type) {
@@ -158,7 +159,7 @@ sys_eval:
 				machine->args[1] = machine->args[0]->cdr->cdr->car;
 				machine->args[0] = machine->args[0]->cdr->car;
 
-				goto sys_evif;
+				SYSCALL(sys_evif);
 			case SYS_SYM_LAMBDA:
 				machine->result = machine->args[0];
 				break;
@@ -173,7 +174,7 @@ sys_eval:
 				machine->args[0] = machine->args[0]->cdr;
 				machine->args[1] = machine->args[1];
 
-				goto sys_evlis;
+				SYSCALL(sys_evlis);
 // SYS_EVAL_0
 sys_eval_evlis_continue:
 				machine->calling_func = SYS_EVAL_1;
@@ -183,7 +184,7 @@ sys_eval_evlis_continue:
 				machine->args[2] = machine->args[1];
 				machine->args[1] = machine->result;
 
-				goto sys_apply;
+				SYSCALL(sys_apply);
 		}
 	}
 
@@ -240,7 +241,7 @@ sys_apply:
 				machine->args[0] = machine->args[0];
 				machine->args[1] = machine->args[2];
 
-				goto sys_eval;
+				SYSCALL(sys_eval);
 
 // SYS_APPLY_0
 sys_apply_eval_continue:
@@ -251,7 +252,7 @@ sys_apply_eval_continue:
 				machine->args[1] = machine->args[1];
 				machine->args[2] = machine->args[2];
 
-				goto sys_apply;
+				SYSCALL(sys_apply);
 		}
 	}
 	else {
@@ -261,7 +262,7 @@ sys_apply_eval_continue:
 		machine->args[1] = machine->args[1];
 		machine->args[2] = machine->args[2];
 
-		goto sys_conenv;
+		SYSCALL(sys_conenv);
 
 // SYS_APPLY_1
 sys_apply_conenv_continue:
@@ -271,7 +272,7 @@ sys_apply_conenv_continue:
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
 		machine->args[1] = machine->result;
 
-		goto sys_eval;
+		SYSCALL(sys_eval);
 	}
 
 
@@ -302,7 +303,7 @@ sys_evlis:
 		machine->args[0] = machine->args[0]->car;
 		machine->args[1] = machine->args[1];
 
-		goto sys_eval;
+		SYSCALL(sys_eval);
 
 // SYS_EVLIS_0
 sys_evlis_eval_continue:
@@ -314,7 +315,7 @@ sys_evlis_eval_continue:
 		machine->args[0] = machine->args[0]->cdr;
 		machine->args[1] = machine->args[1];
 
-		goto sys_evlis;
+		SYSCALL(sys_evlis);
 
 // SYS_EVLIS_1
 sys_evlis_evlis_continue:
@@ -342,7 +343,7 @@ sys_evif:
 	machine->args[0] = machine->args[0];
 	machine->args[1] = machine->args[3];
 
-	goto sys_eval;
+	SYSCALL(sys_eval);
 
 // SYS_EVIF_0
 sys_evif_eval_continue:
@@ -354,13 +355,13 @@ sys_evif_eval_continue:
 		machine->args[0] = machine->args[1];
 		machine->args[1] = machine->args[3];
 
-		goto sys_eval;
+		SYSCALL(sys_eval);
 	}
 	else {
 		machine->args[0] = machine->args[2];
 		machine->args[1] = machine->args[3];
 
-		goto sys_eval;
+		SYSCALL(sys_eval);
 	}
 
 // SYS_EVIF_1
@@ -390,7 +391,7 @@ sys_conenv:
 		machine->args[1] = machine->args[1]->cdr;
 		machine->args[2] = machine->args[2];
 
-		goto sys_conenv;
+		SYSCALL(sys_conenv);
 
 // SYS_CONENV_0
 sys_conenv_conenv_continue:
@@ -423,7 +424,7 @@ sys_lookup:
 		machine->args[0] = machine->args[0];
 		machine->args[1] = machine->args[1]->cdr;
 
-		goto sys_lookup;
+		SYSCALL(sys_lookup);
 	}
 
 // SYS_LOOKUP_0
