@@ -105,25 +105,41 @@
           (cons (string->symbol (substring s 0 index)) index)
           (helper (+ index 1))))
     (helper 0))
-
+  
   ; Start the parsing
   (car (helper (string-ref s 0) (substring s 1))))
 
-(define (print-list list)
+(define (print-list list is-in-list)
+  ; Parse a pair
   (if (pair? list)
-      (let ((string0 (print-list (car list))))
+      ; Parse the car of the pair
+      (let ((string0 (print-list (car list) #f)))
+        ; Parse the cdr. Handle the case when it's null
         (if (null? (cdr list))
-            string0
-            (let ((string1 (print-list (cdr list))))
-              (if (and (not (pair? (car list))) (not (pair? (cdr list))))
-                  (string-append "(" string0 " . " string1 ")")
-                  (string-append "(" string0 " " string1 ")")))))
-        (if (null? list)
-            "()"
-            (symbol->string list))))
+            (if is-in-list
+                string0
+                (string-append "(" string0 ")"))
+            ; Cdr is not null. Determine whether we have a dotted pair
+            ; and see if we are in a list
+            (let* ((car-is-atom (not (pair? (car list))))
+                   (cdr-is-pair (pair? (cdr list)))
+                   (is-dotted-pair (and car-is-atom (not cdr-is-pair)))
+                   (string1 (print-list (cdr list) cdr-is-pair)))
+              ; Join the car and cdr together according to the structure of the list
+              (if is-in-list
+                  (if is-dotted-pair
+                      (string-append string0 " . " string1)
+                      (string-append string0 " " string1))
+                  (if is-dotted-pair
+                      (string-append "(" string0 " . " string1 ")")
+                      (string-append "(" string0 " " string1 ")"))))))
+      ; Parse a symbol
+      (if (null? list)
+          "()"
+          (symbol->string list))))
 
 ;(parse-string "(c (a . b) d (testing (b . d)))")
 ;(parse-string "(define (convert-mpair list) (if (mpair? list) (cons (convert-mpair (mcar list)) (convert-mpair (mcdr list))) list))")
 ;(parse-string-r "(a () (b . ()))")
 ;(parse-string-r "(define (convert-mpair list) (if (mpair? list) (cons (convert-mpair (mcar list)) (convert-mpair (mcdr list))) list))")
-(print-list '(a b c))
+(print-list (parse-string-r "(a . b)") #f)
