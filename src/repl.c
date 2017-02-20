@@ -251,6 +251,7 @@ void print_list(Cell *list) {
 				if(sym_cell->type == SYS_SYM_NUM) {
 					index += sprintf(string + index, "%.*d", -(MAX_PRINT_EXPR_LENGTH - index), (int)(uintptr_t)sym_cell->car);
 					POP(s, Cell *, cell);
+					POP(s, Cell *, cell);
 					is_going_up = true;
 				}
 				else {
