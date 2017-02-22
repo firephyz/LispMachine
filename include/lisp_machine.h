@@ -11,8 +11,6 @@
 	#define INSTR_MAX_LENGTH 10
 	#define INPUT_BUFFER_LENGTH 64
 
-	#define TO_BUFFER_LENGTH(length) #length
-
 	/********************************* Cell Types *******************************/
 	// General variable symbol
 	#define SYS_GENERAL 0
@@ -79,7 +77,7 @@
 	do {																	\
 		if(runtime_info_flag) {												\
 			print_runtime_info(#func);										\
-			struct timespec t = {0, 10999999};								\
+			struct timespec t = {0, 150999999};								\
 			nanosleep(&t, NULL);											\
 		}																\
 		goto func;															\
@@ -126,6 +124,8 @@
 		int mem_free;
 		Cell *free_mem;
 		Cell *nil;
+		//bool needs_return_address; // Set when the calling function needs it's return address. Otherwise, we will use that
+			// stack frame to record the next return address.
 
 		int memory_access_count;
 		int cycle_count;

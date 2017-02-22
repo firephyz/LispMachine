@@ -6,8 +6,6 @@
  *
  * Fix the evaluator so that SYSCALL's are tail recursive.
  *
- * Add input and output
- *
  * Add function definitions?
  *
  * Implement make_expression in software of the machine instead of as an external function

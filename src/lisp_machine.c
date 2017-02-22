@@ -82,6 +82,15 @@ void store_cell(Cell * cell) {
 // onto the system stack. Tops it with the calling function record.
 void push_system_args(int arg_count) {
 
+	// If all the function call needs is a return address, then we will signal that.
+	// Then, this stack frame can simply be replaced by then
+	// if(arg_count == 0) {
+	// 	machine->needs_return_address = false;
+	// }
+	// else {
+	// 	machine->needs_return_address = true;
+	// }
+
 	// Push arguments still needed for calling function
 	for(int i = 0; i < arg_count; ++i) {
 		Cell * cell = get_free_cell();
@@ -135,30 +144,31 @@ void execute() {
 	machine->calling_func = SYS_REPL;
 	push_system_args(0);
 
+/*
+	machine->args[0] = make_expression("				\
+		((lambda (adder a b)							\
+		   (adder a b))									\
+		 (lambda (a b)									\
+		   (if (eq? b null)								\
+		       a 										\
+		       (adder (cons (quote o) a) (cdr b))))		\
+		 (quote (o))									\
+		 (quote (o o o)))									\
+	");
+*/
 
-	//machine->args[0] = make_expression("((lambda (x) x)(if (atom? (quote (a))) (quote b) (quote c)))");
-	// machine->args[0] = make_expression("				\
-	// 	((lambda (adder a b)							\
-	// 	   (adder a b))									\
-	// 	 (lambda (a b)									\
-	// 	   (if (eq? b null)								\
-	// 	       a 										\
-	// 	       (adder (cons (quote o) a) (cdr b))))		\
-	// 	 (quote (o))									\
-	// 	 (quote (o o o)))									\
-	// ");
-	// machine->args[0] = make_expression("		\
-	// 	((lambda (fact x result)				\
-	// 	   (fact x result))						\
-	// 	 (lambda (x result)						\
-	// 	   (if (< x 2)							\
-	// 	       result							\
-	// 	       (fact (- x 1) (* result x))))	\
-	// 	 10 1)									\
-	// 	");
-	machine->args[0] = make_expression("((lambda (func)			\
-		                                   (func (eval (in))))	\
-		                                 (lambda (x) (func (eval (in)))))");
+	machine->args[0] = make_expression("		\
+		((lambda (fact x result)				\
+		   (fact x result))						\
+		 (lambda (x result)						\
+		   (if (< x 2)							\
+		       result							\
+		       (fact (- x 1) (* result x))))	\
+		 10 1)									\
+		");
+	// machine->args[0] = make_expression("((lambda (func)			\
+	// 	                                   (func (eval (in))))	\
+	// 	                                 (lambda (x) (func (eval (in)))))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -387,10 +397,13 @@ sys_apply:
 					}
 					break;
 				case SYS_SYM_JOIN:
+					printf("JOIN");
 					break;
 				case SYS_SYM_SUBSTR:
+					printf("SUBSTR");
 					break;
 				case SYS_SYM_CHARAT:
+					printf("CHARAT");
 					break;
 				case SYS_SYM_IN:
 					printf(" <= ");
