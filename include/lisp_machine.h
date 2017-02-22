@@ -21,41 +21,42 @@
 	#define SYS_RETURN_RECORD 1
 
 	// System instructions
-	#define SYS_SYM_MOD		2
-	#define SYS_SYM_MULT	3
-	#define SYS_SYM_ADD		4
-	#define SYS_SYM_SUB		5
-	#define SYS_SYM_DIV		6
-	#define SYS_SYM_LESS	7
-	#define SYS_SYM_EQUAL	8
-	#define SYS_SYM_GREAT	9
-	#define SYS_SYM_AND		10
-	#define SYS_SYM_ATOM 	11
-	#define SYS_SYM_CAR 	12
-	#define SYS_SYM_CDR		13
-	#define SYS_SYM_CHARAT	14
-	#define SYS_SYM_CONS	15
-	#define SYS_SYM_EQ 		16
+	#define SYS_SYM_MULT	2
+	#define SYS_SYM_ADD		3
+	#define SYS_SYM_SUB		4
+	#define SYS_SYM_DIV		5
+	#define SYS_SYM_LESS	6
+	#define SYS_SYM_EQUAL	7
+	#define SYS_SYM_GREAT	8
+	#define SYS_SYM_AND		9
+	#define SYS_SYM_ATOM 	10
+	#define SYS_SYM_CAR 	11
+	#define SYS_SYM_CDR		12
+	#define SYS_SYM_CHARAT	13
+	#define SYS_SYM_CONS	14
+	#define SYS_SYM_EQ 		15
+	#define SYS_SYM_EVAL	16
 	#define SYS_SYM_FALSE	17
 	#define SYS_SYM_IF		18
 	#define SYS_SYM_IN 		19
 	#define SYS_SYM_JOIN	20
 	#define SYS_SYM_LAMBDA	21
-	#define SYS_SYM_NOT		22
-	#define SYS_SYM_NULL	23
-	#define SYS_SYM_OR		24
-	#define SYS_SYM_OUT 	25
-	#define SYS_SYM_QUIT	26
-	#define SYS_SYM_QUOTE	27
-	#define SYS_SYM_SUBSTR	28
-	#define SYS_SYM_TRUE	29
+	#define SYS_SYM_MOD		22
+	#define SYS_SYM_NOT		23
+	#define SYS_SYM_NULL	24
+	#define SYS_SYM_OR		25
+	#define SYS_SYM_OUT 	26
+	#define SYS_SYM_QUIT	27
+	#define SYS_SYM_QUOTE	28
+	#define SYS_SYM_SUBSTR	29
+	#define SYS_SYM_TRUE	30
 
 	// Self evaluating number
-	#define SYS_SYM_NUM		30
+	#define SYS_SYM_NUM		31
 
 	// Tag for a string
-	#define SYS_SYM_CHAR 	31
-	#define SYS_SYM_STRING	32
+	#define SYS_SYM_CHAR 	32
+	#define SYS_SYM_STRING	33
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.
@@ -64,14 +65,15 @@
 	#define SYS_APPLY_0		2
 	#define SYS_APPLY_1		3
 	#define SYS_APPLY_2		4
-	#define SYS_EVLIS_0		5
-	#define SYS_EVLIS_1		6
-	#define SYS_EVIF_0		7
-	#define SYS_EVIF_1		8
-	#define SYS_EVARTH_0	9
-	#define SYS_CONENV_0	10
-	#define SYS_LOOKUP_0	11
-	#define SYS_REPL		12
+	#define SYS_APPLY_3		5
+	#define SYS_EVLIS_0		6
+	#define SYS_EVLIS_1		7
+	#define SYS_EVIF_0		8
+	#define SYS_EVIF_1		9
+	#define SYS_EVARTH_0	10
+	#define SYS_CONENV_0	11
+	#define SYS_LOOKUP_0	12
+	#define SYS_REPL		13
 
 	#define SYSCALL(func)													\
 	do {																	\

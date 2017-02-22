@@ -10,7 +10,7 @@
  *
  * Add function definitions?
  *
- * Think about how the machine will compile expressions given as strings
+ * Implement make_expression in software of the machine instead of as an external function
  *
  * Fix the make_expression function so that there is less redundancy in code (and make for elegant)
  *
@@ -130,6 +130,9 @@ void print_runtime_stack() {
 				case SYS_APPLY_2:
 					printf("%s\n", "apply");
 					break;
+				case SYS_APPLY_3:
+					printf("%s\n", "apply");
+					break;
 				case SYS_EVLIS_0:
 					printf("%s\n", "evlis");
 					break;
@@ -152,7 +155,7 @@ void print_runtime_stack() {
 					printf("%s\n", "evarth");
 					break;
 				default:
-					printf("UNKNOWN\n");
+					printf("UNKNOWN: %d\n", (int)(intptr_t)stack->car);
 					break;
 			}
 			++index;

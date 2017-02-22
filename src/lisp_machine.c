@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("%% * + - / < = > and atom? car cdr cons charat eq? false if in join lambda not null or out quit quote substr true");
+	init_instr_list("* + - / < = > and atom? car cdr cons charat eq? eval false if in join lambda mod not null or out quit quote substr true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -147,16 +147,18 @@ void execute() {
 	// 	 (quote (o))									\
 	// 	 (quote (o o o)))									\
 	// ");
-	machine->args[0] = make_expression("		\
-		((lambda (fact x result)				\
-		   (fact x result))						\
-		 (lambda (x result)						\
-		   (if (< x 2)							\
-		       result							\
-		       (fact (- x 1) (* result x))))	\
-		 10 1)									\
-		");
-	//machine->args[0] = make_expression("((lambda (input) (out input)) (in))");
+	// machine->args[0] = make_expression("		\
+	// 	((lambda (fact x result)				\
+	// 	   (fact x result))						\
+	// 	 (lambda (x result)						\
+	// 	   (if (< x 2)							\
+	// 	       result							\
+	// 	       (fact (- x 1) (* result x))))	\
+	// 	 10 1)									\
+	// 	");
+	machine->args[0] = make_expression("((lambda (func)			\
+		                                   (func (eval (in))))	\
+		                                 (lambda (x) (func (eval (in)))))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -241,8 +243,10 @@ sys_eval_return:
 	pop_system_args();
 	switch(machine->calling_func) {
 		case SYS_APPLY_0:
+			goto sys_apply_eval_cont;
+		case SYS_APPLY_1:
 			goto sys_apply_eval_continue;
-		case SYS_APPLY_2:
+		case SYS_APPLY_3:
 			goto sys_apply_return;
 		case SYS_EVLIS_0:
 			goto sys_evlis_eval_continue;
@@ -262,8 +266,8 @@ sys_apply:
 	
 	if(machine->args[0]->is_atom) {
 		// Arithmetic operation with multiple args
-		if(machine->args[0]->type >= SYS_SYM_MOD && machine->args[0]->type <= SYS_SYM_DIV) {
-			machine->calling_func = SYS_APPLY_2;
+		if(machine->args[0]->type >= SYS_SYM_MULT && machine->args[0]->type <= SYS_SYM_DIV) {
+			machine->calling_func = SYS_APPLY_3;
 			push_system_args(0);
 
 			machine->args[0] = machine->args[0];
@@ -284,10 +288,6 @@ sys_apply:
 					machine->args[1] = machine->args[1]->cdr;
 					break;
 				case SYS_SYM_DIV:
-					machine->args[2]->car = machine->args[1]->car->car;
-					machine->args[1] = machine->args[1]->cdr;
-					break;
-				case SYS_SYM_MOD:
 					machine->args[2]->car = machine->args[1]->car->car;
 					machine->args[1] = machine->args[1]->cdr;
 					break;
@@ -318,7 +318,7 @@ sys_apply:
 					break;
 				case SYS_SYM_QUIT:
 					machine->result = make_expression("HALT");
-					printf("Program requested the machine to quit execution. Quiting...\n");
+					printf(" => Program requested the machine to quit execution. Quiting...\n");
 					return;
 				case SYS_SYM_LESS:
 					if(machine->args[1]->car->car < machine->args[1]->cdr->car->car) {
@@ -343,6 +343,24 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
+					break;
+				case SYS_SYM_MOD:
+					machine->calling_func = SYS_APPLY_3;
+					push_system_args(0);
+
+					machine->args[0] = machine->args[0];
+					machine->args[1] = machine->args[1];
+					machine->args[2] = get_free_cell();
+					machine->args[3] = machine->nil;
+
+					machine->args[2]->car = machine->args[1]->car->car;
+					machine->args[1] = machine->args[1]->cdr;
+					
+					machine->args[2]->cdr = NULL;
+					machine->args[2]->is_atom = true;
+					machine->args[2]->type = SYS_SYM_NUM;
+
+					SYSCALL(sys_evarth);
 					break;
 				case SYS_SYM_AND:
 					if(machine->args[1]->car == NULL && machine->args[1]->cdr->car == NULL) {
@@ -386,8 +404,24 @@ sys_apply:
 					print_list(machine->args[1]->car);
 					machine->result = machine->nil;
 					break;
-				default:
+				case SYS_SYM_EVAL:
 					machine->calling_func = SYS_APPLY_0;
+					push_system_args(0);
+
+					machine->args[0] = machine->args[1]->car;
+					machine->args[1] = machine->args[2];
+					machine->args[2] = machine->nil;
+					machine->args[3] = machine->nil;
+
+					SYSCALL(sys_eval);
+
+// SYS_APPLY_0
+sys_apply_eval_cont:
+					printf("\n > ");
+					print_list(machine->result);
+					break;
+				default:
+					machine->calling_func = SYS_APPLY_1;
 					push_system_args(3);
 
 					machine->args[0] = machine->args[0];
@@ -397,9 +431,9 @@ sys_apply:
 
 					SYSCALL(sys_eval);
 
-// SYS_APPLY_0
+// SYS_APPLY_1
 sys_apply_eval_continue:
-					machine->calling_func = SYS_APPLY_2;
+					machine->calling_func = SYS_APPLY_3;
 					push_system_args(0);
 
 					machine->args[0] = machine->result;
@@ -412,7 +446,7 @@ sys_apply_eval_continue:
 		}
 	}
 	else {
-		machine->calling_func = SYS_APPLY_1;
+		machine->calling_func = SYS_APPLY_2;
 		push_system_args(3);
 		machine->args[0] = machine->args[0]->cdr->car;
 		machine->args[1] = machine->args[1];
@@ -421,9 +455,9 @@ sys_apply_eval_continue:
 
 		SYSCALL(sys_conenv);
 
-// SYS_APPLY_1
+// SYS_APPLY_2
 sys_apply_conenv_continue:
-		machine->calling_func = SYS_APPLY_2;
+		machine->calling_func = SYS_APPLY_3;
 		push_system_args(0);
 
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
@@ -436,13 +470,13 @@ sys_apply_conenv_continue:
 
 
 	// Return from sys_apply
-// SYS_APPLY_2
+// SYS_APPLY_3
 sys_apply_return:
 	pop_system_args();
 	switch(machine->calling_func) {
 		case SYS_EVAL_1:
 			goto sys_eval_return;
-		case SYS_APPLY_2:
+		case SYS_APPLY_3:
 			goto sys_apply_return;
 	}
 
@@ -580,7 +614,7 @@ sys_evif_return:
 sys_evarth_return:
  	pop_system_args();
  	switch(machine->calling_func) {
- 		case SYS_APPLY_2:
+ 		case SYS_APPLY_3:
  			goto sys_apply_return;
  		case SYS_EVARTH_0:
  			goto sys_evarth_return;
@@ -615,7 +649,7 @@ sys_conenv_conenv_continue:
 
 	pop_system_args();
 	switch(machine->calling_func) {
-		case SYS_APPLY_1:
+		case SYS_APPLY_2:
 			goto sys_apply_conenv_continue;
 		case SYS_CONENV_0:
 			goto sys_conenv_conenv_continue;
