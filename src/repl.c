@@ -39,15 +39,15 @@ int main(int argc, char * argv[]) {
 
 	if(!quiet_flag) {
 		printf("\n");
-		printf(" > ********************\n");
-		printf(" > *  LISP Emulator   *\n");
-		printf(" > ********************\n\n");
+		printf(" => ********************\n");
+		printf(" => *  LISP Emulator   *\n");
+		printf(" => ********************\n\n");
 	}
 
 	machine = init_machine();
 
 	if(!quiet_flag) {
-		printf(" > Starting session...\n\n");
+		printf(" => Starting session...\n\n");
 	}
 
 	if(runtime_info_flag) {

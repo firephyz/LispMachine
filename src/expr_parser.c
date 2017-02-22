@@ -129,6 +129,9 @@ char * tokenizer_next(Tokenizer * tk) {
 		case '\t':
 			++tk->index;
 			return tokenizer_next(tk);
+		case '\n':
+			++tk->index;
+			return tokenizer_next(tk);
 		default:;
 			int symbol_length = index_of(tk->string + tk->index, "\t ()");
 

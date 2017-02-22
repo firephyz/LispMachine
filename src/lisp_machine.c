@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("%% * + - / < = > and atom? car cdr cons eq? false if lambda not null or quit quote true");
+	init_instr_list("%% * + - / < = > and atom? car cdr cons charat eq? false if in join lambda not null or out quit quote substr true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -156,6 +156,7 @@ void execute() {
 		       (fact (- x 1) (* result x))))	\
 		 10 1)									\
 		");
+	//machine->args[0] = make_expression("((lambda (input) (out input)) (in))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -366,6 +367,24 @@ sys_apply:
 					else {
 						machine->result = NULL;
 					}
+					break;
+				case SYS_SYM_JOIN:
+					break;
+				case SYS_SYM_SUBSTR:
+					break;
+				case SYS_SYM_CHARAT:
+					break;
+				case SYS_SYM_IN:
+					printf(" <= ");
+					char * string = malloc(sizeof(char) * INPUT_BUFFER_LENGTH);
+					fgets(string, INPUT_BUFFER_LENGTH, stdin);
+					machine->result = make_expression(string);
+					free(string);
+					break;
+				case SYS_SYM_OUT:
+					printf(" => ");
+					print_list(machine->args[1]->car);
+					machine->result = machine->nil;
 					break;
 				default:
 					machine->calling_func = SYS_APPLY_0;

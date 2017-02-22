@@ -9,6 +9,9 @@
 	#define NUM_OF_CELLS 65536
 
 	#define INSTR_MAX_LENGTH 10
+	#define INPUT_BUFFER_LENGTH 64
+
+	#define TO_BUFFER_LENGTH(length) #length
 
 	/********************************* Cell Types *******************************/
 	// General variable symbol
@@ -30,20 +33,29 @@
 	#define SYS_SYM_ATOM 	11
 	#define SYS_SYM_CAR 	12
 	#define SYS_SYM_CDR		13
-	#define SYS_SYM_CONS	14
-	#define SYS_SYM_EQ 		15
-	#define SYS_SYM_FALSE	16
-	#define SYS_SYM_IF		17
-	#define SYS_SYM_LAMBDA	18
-	#define SYS_SYM_NOT		19
-	#define SYS_SYM_NULL	20
-	#define SYS_SYM_OR		21
-	#define SYS_SYM_QUIT	22
-	#define SYS_SYM_QUOTE	23
-	#define SYS_SYM_TRUE	24
+	#define SYS_SYM_CHARAT	14
+	#define SYS_SYM_CONS	15
+	#define SYS_SYM_EQ 		16
+	#define SYS_SYM_FALSE	17
+	#define SYS_SYM_IF		18
+	#define SYS_SYM_IN 		19
+	#define SYS_SYM_JOIN	20
+	#define SYS_SYM_LAMBDA	21
+	#define SYS_SYM_NOT		22
+	#define SYS_SYM_NULL	23
+	#define SYS_SYM_OR		24
+	#define SYS_SYM_OUT 	25
+	#define SYS_SYM_QUIT	26
+	#define SYS_SYM_QUOTE	27
+	#define SYS_SYM_SUBSTR	28
+	#define SYS_SYM_TRUE	29
 
 	// Self evaluating number
-	#define SYS_SYM_NUM		25
+	#define SYS_SYM_NUM		30
+
+	// Tag for a string
+	#define SYS_SYM_CHAR 	31
+	#define SYS_SYM_STRING	32
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.
