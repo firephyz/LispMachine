@@ -65,9 +65,9 @@
 	do {																	\
 		if(runtime_info_flag) {												\
 			print_runtime_info(#func);										\
-			struct timespec t = {0, 200999999};								\
+			struct timespec t = {0, 10999999};								\
 			nanosleep(&t, NULL);											\
-		}																	\
+		}																\
 		goto func;															\
 	} while(0)																\
 

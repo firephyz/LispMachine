@@ -321,6 +321,7 @@ uint8_t determine_symbol_type(char * name) {
 	return result;
 }
 
+// Returns a string for the symbol given. String must be freed later
 char * get_symbol_name(Cell * sym) {
 
 	// If the symbol is NIL, just return that to be printed
@@ -329,6 +330,14 @@ char * get_symbol_name(Cell * sym) {
 		string[0] = '(';
 		string[1] = ')';
 		string[2] = '\0';
+		return string;
+	}
+
+	// The cell might represent a number
+	if(sym->type == SYS_SYM_NUM) {
+		int max_num_length = 30;
+		char * string = malloc(sizeof(char) * max_num_length + 1);
+		snprintf(string, max_num_length + 1, "%d", (int)(uintptr_t)sym->car);
 		return string;
 	}
 

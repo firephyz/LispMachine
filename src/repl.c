@@ -13,6 +13,8 @@
  * Think about how the machine will compile expressions given as strings
  *
  * Fix the make_expression function so that there is less redundancy in code (and make for elegant)
+ *
+ * Fix the print_list_helper function to better protect against buffer overflows
  */
 
 
@@ -146,6 +148,12 @@ void print_runtime_stack() {
 				case SYS_LOOKUP_0:
 					printf("%s\n", "lookup");
 					break;
+				case SYS_EVARTH_0:
+					printf("%s\n", "evarth");
+					break;
+				default:
+					printf("UNKNOWN\n");
+					break;
 			}
 			++index;
 		}
@@ -158,125 +166,151 @@ void print_list(Cell *list) {
 
 	char string[MAX_PRINT_EXPR_LENGTH + 1];
 
-	// NULL is true, machine->nil is false
+	int index = 0;
+
+	print_list_helper(list, string, &index, false);
+	string[index] = '\0';
+
+	printf("%s\n", string);
+}
+
+// Returns 1 if the string gets too long, 0 otherwise
+// Crudely protects against overflowing the buffer but it isn't a perfect solution. Printing of parens,
+// spaces and periods in between recursive calls could in theory overflow the buffer.
+int print_list_helper(Cell *list, char *string, int *index, bool is_in_list) {
+
+	// Check if we are past the end of the buffer
+	if(*index >= MAX_PRINT_EXPR_LENGTH - PRINT_EXPR_PADDING) {
+		string[*index - 3] = '.';
+		string[*index - 2] = '.';
+		string[*index - 1] = '.';
+
+		return 1;
+	}
+
+	// Remember, NULL means true. I really need to change that...
 	if(list == NULL) {
-		string[0] = 'T';
-		string[1] = '\n';
-		string[2] = '\0';
+		string[*index] = 'T';
+		++*index;
+		return 0;
 	}
-	// Print number if it's a number
-	else if(list->type == SYS_SYM_NUM) {
-		sprintf(string, "%.*d\n", -MAX_PRINT_EXPR_LENGTH, (int)(uintptr_t)list->car);
-	}
-	else if(list->is_atom) {
 
-		// Handles the case when it is only the empty list
-		if(list == machine->nil) {
-			string[0] = '(';
-			string[1] = ')';
-			string[2] = '\n';
-			string[3] = '\0';
-		}
-		// Else must be a normal symbol
-		else {
-			char * symbol = get_symbol_name(list);
-			strncpy(string, symbol, MAX_PRINT_EXPR_LENGTH);
-			string[strlen(symbol)] = '\n';
-			string[strlen(symbol) + 1] = '\0';
-			free(symbol);
-		}
-	}
-	else {
-		Cell * cell = list;
-		bool is_going_up = false;
-
-		Stack s;
-		MAKE_STACK(s, Cell *);
-		PUSH(s, Cell *, cell);
-
-		int index = 0;
-		string[index] = '(';
-		++index;
-
-		while(s.n != 0 || is_going_up) {
-
-			if(index > MAX_PRINT_EXPR_LENGTH - 5) {
-				string[MAX_PRINT_EXPR_LENGTH - 5] = '.';
-				string[MAX_PRINT_EXPR_LENGTH - 4] = '.';
-				string[MAX_PRINT_EXPR_LENGTH - 3] = '.';
-				string[MAX_PRINT_EXPR_LENGTH - 2] = '\n';
-				string[MAX_PRINT_EXPR_LENGTH - 1] = '\0';
-				printf("%s", string);
-				return;
-			}
-
-			// If we have already traversed down, then we must go over one
-			if(is_going_up) {
-				// Go across the current list to the next element
-				if(cell->cdr != machine->nil) {
-					string[index] = ' ';
-					++index;
-					cell = cell->cdr;
-					PUSH(s, Cell *, cell);
-					is_going_up = false;
-				}
-				// Print the end of a list
-				else {
-					string[index] = ')';
-					++index;
-
-					if(s.n != 0) {
-						POP(s, Cell *, cell);
-					}
-					else {
-						is_going_up = false;
-					}
+	if(!list->is_atom) {
+		// Executed when we reach the end of list of cells
+		if(list->cdr == machine->nil) {
+			// Executed when we reach the end of a list
+			if(is_in_list) {
+				if(print_list_helper(list->car, string, index, false)) {
+					return 1;
 				}
 			}
-			else if (cell->is_atom || cell->car->is_atom) {
-				Cell * sym_cell = cell;
-
-				// We have a pair of atoms
-				if(cell->is_atom) {
-					string[index] = '.';
-					string[index + 1] = ' ';
-					index += 2;
-				}
-				// Otherwise we have an atom followed by a list
-				else {
-					sym_cell = sym_cell->car;
-				}
-
-				// Print number if it's a number
-				if(sym_cell->type == SYS_SYM_NUM) {
-					index += sprintf(string + index, "%.*d", -(MAX_PRINT_EXPR_LENGTH - index), (int)(uintptr_t)sym_cell->car);
-					POP(s, Cell *, cell);
-					POP(s, Cell *, cell);
-					is_going_up = true;
-				}
-				else {
-					char * symbol = get_symbol_name(sym_cell);
-					strncpy(string + index, symbol, MAX_PRINT_EXPR_LENGTH - index);
-					index += strlen(symbol);
-					free(symbol);
-					POP(s, Cell *, cell);
-					is_going_up = true;
-				}
-			}
-			// Traverse down
+			// Could have been just a list
+			// of one element in which case we need this special case.
 			else {
-				string[index] = '(';
-				++index;
-				cell = cell->car;
-				PUSH(s, Cell *, cell);
+				string[*index] = '(';
+				++*index;
+
+				if(print_list_helper(list->car, string, index, false)) {
+					return 1;
+				}
+
+				string[*index] = ')';
+				++*index;
 			}
 		}
+		// Handle lists
+		else {
+			bool car_is_atom = list->car->is_atom;
+			bool cdr_is_pair = !list->cdr->is_atom;
+			bool is_dotted_pair = car_is_atom & (!cdr_is_pair);
 
-		string[index] = '\n';
-		++index;
+			// We are in the middle of a list
+			if(is_in_list) {
+				if(is_dotted_pair) {
+					if(print_list_helper(list->car, string, index, false)) {
+						return 1;
+					}
+
+					string[*index] = ' ';
+					string[*index + 1] = '.';
+					string[*index + 2] = ' ';
+					*index += 3;
+
+					if(print_list_helper(list->cdr, string, index, cdr_is_pair)) {
+						return 1;
+					}
+				}
+				else {
+					if(print_list_helper(list->car, string, index, false)) {
+						return 1;
+					}
+
+					string[*index] = ' ';
+					++*index;
+
+					if(print_list_helper(list->cdr, string, index, cdr_is_pair)) {
+						return 1;
+					}
+				}
+			}
+			// We are at the start of a list
+			else {
+				if(is_dotted_pair) {
+					string[*index] = '(';
+					++*index;
+
+					if(print_list_helper(list->car, string, index, false)) {
+						return 1;
+					}
+
+					string[*index] = ' ';
+					string[*index + 1] = '.';
+					string[*index + 2] = ' ';
+					*index += 3;
+
+					if(print_list_helper(list->cdr, string, index, cdr_is_pair)) {
+						return 1;
+					}
+
+					string[*index] = ')';
+					++*index;
+				}
+				else {
+					string[*index] = '(';
+					++*index;
+
+					if(print_list_helper(list->car, string, index, false)) {
+						return 1;
+					}
+
+					string[*index] = ' ';
+					++*index;
+
+					if(print_list_helper(list->cdr, string, index, cdr_is_pair)) {
+						return 1;
+					}
+
+					string[*index] = ')';
+					++*index;
+				}
+			}
+		}
+	}
+	// Handle printing of the null symbol
+	else if(list == machine->nil) {
+		string[*index] = '(';
+		string[*index + 1] = ')';
+		*index += 2;
+	}
+	// Print a symbol
+	else {
+		char * name = get_symbol_name(list);
+		strncpy(string + *index, name, MAX_PRINT_EXPR_LENGTH - *index);
+		*index += strlen(name);
+		free(name);
 	}
 
-	printf("%s", string);
+	return 0;
 }
 
 void process_args(int argc, char * argv[]) {
