@@ -59,6 +59,7 @@ int main(int argc, char * argv[]) {
 
 	printf(" > ");
 	print_list(machine->result);
+	printf("\n");
 
 	destroy_machine(machine);
 }
@@ -113,10 +114,7 @@ void print_runtime_stack() {
 				case SYS_REPL:
 					printf("%s\n", "repl");
 					break;
-				case SYS_EVAL_0:
-					printf("%s\n", "eval");
-					break;
-				case SYS_EVAL_1:
+				case SYS_EVAL:
 					printf("%s\n", "eval");
 					break;
 				case SYS_APPLY_0:
@@ -128,29 +126,17 @@ void print_runtime_stack() {
 				case SYS_APPLY_2:
 					printf("%s\n", "apply");
 					break;
-				case SYS_APPLY_3:
-					printf("%s\n", "apply");
-					break;
 				case SYS_EVLIS_0:
 					printf("%s\n", "evlis");
 					break;
 				case SYS_EVLIS_1:
 					printf("%s\n", "evlis");
 					break;
-				case SYS_EVIF_0:
+				case SYS_EVIF:
 					printf("%s\n", "evif");
 					break;
-				case SYS_EVIF_1:
-					printf("%s\n", "evif");
-					break;
-				case SYS_CONENV_0:
+				case SYS_CONENV:
 					printf("%s\n", "conenv");
-					break;
-				case SYS_LOOKUP_0:
-					printf("%s\n", "lookup");
-					break;
-				case SYS_EVARTH_0:
-					printf("%s\n", "evarth");
 					break;
 				default:
 					printf("UNKNOWN: %d\n", (int)(intptr_t)stack->car);

@@ -58,20 +58,16 @@
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.
-	#define SYS_EVAL_0		0
-	#define SYS_EVAL_1		1
-	#define SYS_APPLY_0		2
-	#define SYS_APPLY_1		3
-	#define SYS_APPLY_2		4
-	#define SYS_APPLY_3		5
-	#define SYS_EVLIS_0		6
-	#define SYS_EVLIS_1		7
-	#define SYS_EVIF_0		8
-	#define SYS_EVIF_1		9
-	#define SYS_EVARTH_0	10
-	#define SYS_CONENV_0	11
-	#define SYS_LOOKUP_0	12
-	#define SYS_REPL		13
+	#define SYS_EVAL		0
+	#define SYS_APPLY_0		1
+	#define SYS_APPLY_1		2
+	#define SYS_APPLY_2		3
+	#define SYS_EVLIS_0		4
+	#define SYS_EVLIS_1		5
+	#define SYS_EVIF		6
+	#define SYS_CONENV		8
+	#define SYS_RETURN 		10
+	#define SYS_REPL		11
 
 	#define SYSCALL(func)													\
 	do {																	\

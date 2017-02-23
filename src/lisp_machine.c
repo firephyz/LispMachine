@@ -157,18 +157,18 @@ void execute() {
 	");
 */
 
-	machine->args[0] = make_expression("		\
-		((lambda (fact x result)				\
-		   (fact x result))						\
-		 (lambda (x result)						\
-		   (if (< x 2)							\
-		       result							\
-		       (fact (- x 1) (* result x))))	\
-		 10 1)									\
-		");
-	// machine->args[0] = make_expression("((lambda (func)			\
-	// 	                                   (func (eval (in))))	\
-	// 	                                 (lambda (x) (func (eval (in)))))");
+	// machine->args[0] = make_expression("		\
+	// 	((lambda (fact x result)				\
+	// 	   (fact x result))						\
+	// 	 (lambda (x result)						\
+	// 	   (if (< x 2)							\
+	// 	       result							\
+	// 	       (fact (- x 1) (* result x))))	\
+	// 	 10 1)									\
+	// 	");
+	machine->args[0] = make_expression("((lambda (func)			\
+		                                   (func (eval (in))))	\
+		                                 (lambda (x) (func (eval (in)))))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -180,8 +180,6 @@ void execute() {
 sys_eval:
 	if(machine->args[0]->is_atom) {
 		if(machine->args[0]->type == SYS_GENERAL) {
-			machine->calling_func = SYS_EVAL_1;
-			push_system_args(0);
 			machine->args[0] = machine->args[0];
 			machine->args[1] = machine->args[1];
 			SYSCALL(sys_lookup);
@@ -201,15 +199,13 @@ sys_eval:
 					machine->result = machine->args[0];
 					break;
 			}
+			goto sys_execute_return;
 		}
 	}
 	else {
 		switch(machine->args[0]->car->type) {
 			case SYS_SYM_IF:
-				// Push calling function
-				machine->calling_func = SYS_EVAL_1;
-				push_system_args(0);
-				// Setup arguments for next function
+
 				machine->args[3] = machine->args[1];
 				machine->args[2] = machine->args[0]->cdr->cdr->cdr->car;
 				machine->args[1] = machine->args[0]->cdr->cdr->car;
@@ -218,13 +214,13 @@ sys_eval:
 				SYSCALL(sys_evif);
 			case SYS_SYM_LAMBDA:
 				machine->result = machine->args[0];
-				break;
+				goto sys_execute_return;
 			case SYS_SYM_QUOTE:
 				machine->result = machine->args[0]->cdr->car;
-				break;
+				goto sys_execute_return;
 			default:
 				// Push args for later access
-				machine->calling_func = SYS_EVAL_0;
+				machine->calling_func = SYS_EVAL;
 				push_system_args(2);
 				// Setup args for evlis
 				machine->args[0] = machine->args[0]->cdr;
@@ -233,10 +229,10 @@ sys_eval:
 				machine->args[3] = machine->nil;
 
 				SYSCALL(sys_evlis);
-// SYS_EVAL_0
-sys_eval_evlis_continue:
-				machine->calling_func = SYS_EVAL_1;
-				push_system_args(0);
+
+				// SYS_EVAL
+				sys_eval_evlis_continue:
+
 				// Set up args for sys_apply
 				machine->args[0] = machine->args[0]->car;
 				machine->args[2] = machine->args[1];
@@ -247,26 +243,6 @@ sys_eval_evlis_continue:
 		}
 	}
 
-	// Return from sys_eval
-// SYS_EVAL_1
-sys_eval_return:
-	pop_system_args();
-	switch(machine->calling_func) {
-		case SYS_APPLY_0:
-			goto sys_apply_eval_cont;
-		case SYS_APPLY_1:
-			goto sys_apply_eval_continue;
-		case SYS_APPLY_3:
-			goto sys_apply_return;
-		case SYS_EVLIS_0:
-			goto sys_evlis_eval_continue;
-		case SYS_EVIF_0:
-			goto sys_evif_eval_continue;
-		case SYS_EVIF_1:
-			goto sys_evif_return;
-		case SYS_REPL:
-			goto sys_execute_done;
-	}
 
 /***********************************************************
  ************************* Apply ***************************
@@ -277,8 +253,6 @@ sys_apply:
 	if(machine->args[0]->is_atom) {
 		// Arithmetic operation with multiple args
 		if(machine->args[0]->type >= SYS_SYM_MULT && machine->args[0]->type <= SYS_SYM_DIV) {
-			machine->calling_func = SYS_APPLY_3;
-			push_system_args(0);
 
 			machine->args[0] = machine->args[0];
 			machine->args[1] = machine->args[1];
@@ -313,23 +287,23 @@ sys_apply:
 			switch(machine->args[0]->type) {
 				case SYS_SYM_CAR:
 					machine->result = machine->args[1]->car->car;
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_CDR:
 					machine->result = machine->args[1]->car->cdr;
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_CONS:
 					machine->result = cons(machine->args[1]->car, machine->args[1]->cdr->car);
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_EQ:
 					machine->result = eq(machine->args[1]->car, machine->args[1]->cdr->car);
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_ATOM:
 					machine->result = atom(machine->args[1]->car);
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_QUIT:
 					machine->result = make_expression("HALT");
 					printf(" => Program requested the machine to quit execution. Quiting...\n");
-					return;
+					goto sys_execute_done;
 				case SYS_SYM_LESS:
 					if(machine->args[1]->car->car < machine->args[1]->cdr->car->car) {
 						machine->result = NULL;
@@ -337,7 +311,7 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_EQUAL:
 					if(machine->args[1]->car->car == machine->args[1]->cdr->car->car) {
 						machine->result = NULL;
@@ -345,7 +319,7 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_GREAT:
 					if(machine->args[1]->car->car > machine->args[1]->cdr->car->car) {
 						machine->result = NULL;
@@ -353,11 +327,8 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_MOD:
-					machine->calling_func = SYS_APPLY_3;
-					push_system_args(0);
-
 					machine->args[0] = machine->args[0];
 					machine->args[1] = machine->args[1];
 					machine->args[2] = get_free_cell();
@@ -371,7 +342,6 @@ sys_apply:
 					machine->args[2]->type = SYS_SYM_NUM;
 
 					SYSCALL(sys_evarth);
-					break;
 				case SYS_SYM_AND:
 					if(machine->args[1]->car == NULL && machine->args[1]->cdr->car == NULL) {
 						machine->result = NULL;
@@ -379,7 +349,7 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_OR:
 					if(machine->args[1]->car == NULL || machine->args[1]->cdr->car == NULL) {
 						machine->result = NULL;
@@ -387,7 +357,7 @@ sys_apply:
 					else {
 						machine->result = machine->nil;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_NOT:
 					if(machine->args[1]->car == NULL) {
 						machine->result = machine->nil;
@@ -395,28 +365,28 @@ sys_apply:
 					else {
 						machine->result = NULL;
 					}
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_JOIN:
 					printf("JOIN");
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_SUBSTR:
 					printf("SUBSTR");
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_CHARAT:
 					printf("CHARAT");
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_IN:
 					printf(" <= ");
 					char * string = malloc(sizeof(char) * INPUT_BUFFER_LENGTH);
 					fgets(string, INPUT_BUFFER_LENGTH, stdin);
 					machine->result = make_expression(string);
 					free(string);
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_OUT:
 					printf(" => ");
 					print_list(machine->args[1]->car);
 					machine->result = machine->nil;
-					break;
+					goto sys_execute_return;
 				case SYS_SYM_EVAL:
 					machine->calling_func = SYS_APPLY_0;
 					push_system_args(0);
@@ -428,11 +398,12 @@ sys_apply:
 
 					SYSCALL(sys_eval);
 
-// SYS_APPLY_0
-sys_apply_eval_cont:
+					// SYS_APPLY_0
+					sys_apply_eval_cont:
+
 					printf("\n > ");
 					print_list(machine->result);
-					break;
+					goto sys_execute_return;
 				default:
 					machine->calling_func = SYS_APPLY_1;
 					push_system_args(3);
@@ -444,10 +415,8 @@ sys_apply_eval_cont:
 
 					SYSCALL(sys_eval);
 
-// SYS_APPLY_1
-sys_apply_eval_continue:
-					machine->calling_func = SYS_APPLY_3;
-					push_system_args(0);
+					// SYS_APPLY_1
+					sys_apply_eval_continue:
 
 					machine->args[0] = machine->result;
 					machine->args[1] = machine->args[1];
@@ -461,6 +430,7 @@ sys_apply_eval_continue:
 	else {
 		machine->calling_func = SYS_APPLY_2;
 		push_system_args(3);
+
 		machine->args[0] = machine->args[0]->cdr->car;
 		machine->args[1] = machine->args[1];
 		machine->args[2] = machine->args[2];
@@ -468,10 +438,8 @@ sys_apply_eval_continue:
 
 		SYSCALL(sys_conenv);
 
-// SYS_APPLY_2
-sys_apply_conenv_continue:
-		machine->calling_func = SYS_APPLY_3;
-		push_system_args(0);
+		// SYS_APPLY_2
+		sys_apply_conenv_continue:
 
 		machine->args[0] = machine->args[0]->cdr->cdr->car;
 		machine->args[1] = machine->result;
@@ -479,18 +447,6 @@ sys_apply_conenv_continue:
 		machine->args[3] = machine->nil;
 
 		SYSCALL(sys_eval);
-	}
-
-
-	// Return from sys_apply
-// SYS_APPLY_3
-sys_apply_return:
-	pop_system_args();
-	switch(machine->calling_func) {
-		case SYS_EVAL_1:
-			goto sys_eval_return;
-		case SYS_APPLY_3:
-			goto sys_apply_return;
 	}
 
 /***********************************************************
@@ -501,6 +457,7 @@ sys_evlis:
 
 	if(machine->args[0] == machine->nil) {
 		machine->result = machine->nil;
+		goto sys_execute_return;
 	}
 	else {
 		machine->calling_func = SYS_EVLIS_0;
@@ -513,8 +470,9 @@ sys_evlis:
 
 		SYSCALL(sys_eval);
 
-// SYS_EVLIS_0
-sys_evlis_eval_continue:
+		// SYS_EVLIS_0
+		sys_evlis_eval_continue:
+
 		// Save the result so push 3 args
 		machine->calling_func = SYS_EVLIS_1;
 		machine->args[2] = machine->result;
@@ -527,18 +485,11 @@ sys_evlis_eval_continue:
 
 		SYSCALL(sys_evlis);
 
-// SYS_EVLIS_1
-sys_evlis_evlis_continue:
+		// SYS_EVLIS_1
+		sys_evlis_evlis_continue:
 		
 		machine->result = cons(machine->args[2], machine->result);
-	}
-
-	pop_system_args();
-	switch(machine->calling_func) {
-		case SYS_EVAL_0:
-			goto sys_eval_evlis_continue;
-		case SYS_EVLIS_1:
-			goto sys_evlis_evlis_continue;
+		goto sys_execute_return;
 	}
 
 /***********************************************************
@@ -547,7 +498,7 @@ sys_evlis_evlis_continue:
 
 sys_evif:
 	
-	machine->calling_func = SYS_EVIF_0;
+	machine->calling_func = SYS_EVIF;
 	push_system_args(4);
 
 	machine->args[0] = machine->args[0];
@@ -557,11 +508,8 @@ sys_evif:
 
 	SYSCALL(sys_eval);
 
-// SYS_EVIF_0
-sys_evif_eval_continue:
-
-	machine->calling_func = SYS_EVIF_1;
-	push_system_args(0);
+	// SYS_EVIF_0
+	sys_evif_eval_continue:
 
 	if(machine->result != machine->nil) {
 		machine->args[0] = machine->args[1];
@@ -580,15 +528,6 @@ sys_evif_eval_continue:
 		SYSCALL(sys_eval);
 	}
 
-// SYS_EVIF_1
-sys_evif_return:
-	
-	pop_system_args();
-	switch(machine->calling_func) {
-		case SYS_EVAL_1:
-			goto sys_eval_return;
-	}
-
 /***********************************************************
  ************************* Evarth **************************
  ***********************************************************/
@@ -596,11 +535,9 @@ sys_evif_return:
  sys_evarth:
  	if(machine->args[1] == machine->nil) {
  		machine->result = machine->args[2];
+ 		goto sys_execute_return;
  	}
  	else {
- 		machine->calling_func = SYS_EVARTH_0;
- 		push_system_args(0);
-
  		machine->args[0] = machine->args[0];
  		switch(machine->args[0]->type) {
  			case SYS_SYM_MULT:
@@ -624,15 +561,6 @@ sys_evif_return:
  		SYSCALL(sys_evarth);
  	}
 
-sys_evarth_return:
- 	pop_system_args();
- 	switch(machine->calling_func) {
- 		case SYS_APPLY_3:
- 			goto sys_apply_return;
- 		case SYS_EVARTH_0:
- 			goto sys_evarth_return;
- 	}
-
 /***********************************************************
  ************************* Conenv **************************
  ***********************************************************/
@@ -641,9 +569,10 @@ sys_conenv:
 
 	if(machine->args[0] == machine->nil) {
 		machine->result = machine->args[2];
+		goto sys_execute_return;
 	}
 	else {
-		machine->calling_func = SYS_CONENV_0;
+		machine->calling_func = SYS_CONENV;
 		machine->args[3] = cons(machine->args[0]->car, machine->args[1]->car);
 		push_system_args(4);
 
@@ -654,18 +583,11 @@ sys_conenv:
 
 		SYSCALL(sys_conenv);
 
-// SYS_CONENV_0
-sys_conenv_conenv_continue:
+		// SYS_CONENV_0
+		sys_conenv_conenv_continue:
 
 		machine->result = cons(machine->args[3], machine->result);
-	}
-
-	pop_system_args();
-	switch(machine->calling_func) {
-		case SYS_APPLY_2:
-			goto sys_apply_conenv_continue;
-		case SYS_CONENV_0:
-			goto sys_conenv_conenv_continue;
+		goto sys_execute_return;
 	}
 
 /***********************************************************
@@ -674,33 +596,58 @@ sys_conenv_conenv_continue:
 
 sys_lookup:
 
-	// NULL is true in this machine
-	if(eq(machine->args[1]->car->car, machine->args[0]) == NULL) {
-		machine->result = machine->args[1]->car->cdr;
-	}
-	else {
-		machine->calling_func = SYS_LOOKUP_0;
-		push_system_args(0);
+	if(machine->args[1] == machine->nil) {
+		printf(" => Symbol not found: %s\n", get_symbol_name(machine->args[0]));
 
-		machine->args[0] = machine->args[0];
-		machine->args[1] = machine->args[1]->cdr;
+		machine->args[0] = make_expression("(quit)");
+		machine->args[1] = machine->nil;
 		machine->args[2] = machine->nil;
 		machine->args[3] = machine->nil;
 
-		SYSCALL(sys_lookup);
+		SYSCALL(sys_eval);
+	}
+	else {
+		// NULL is true in this machine
+		if(eq(machine->args[1]->car->car, machine->args[0]) == NULL) {
+			machine->result = machine->args[1]->car->cdr;
+			goto sys_execute_return;
+		}
+		else {
+			machine->args[0] = machine->args[0];
+			machine->args[1] = machine->args[1]->cdr;
+			machine->args[2] = machine->nil;
+			machine->args[3] = machine->nil;
+
+			SYSCALL(sys_lookup);
+		}
 	}
 
-// SYS_LOOKUP_0
-sys_lookup_return:
+/***********************************************************
+ ************************* Return **************************
+ ***********************************************************/
 
+sys_execute_return:
 	pop_system_args();
 	switch(machine->calling_func) {
-		case SYS_EVAL_1:
-			goto sys_eval_return;
-		case SYS_LOOKUP_0:
-			goto sys_lookup_return;
+		case SYS_EVAL:
+			goto sys_eval_evlis_continue;
+		case SYS_APPLY_0:
+			goto sys_apply_eval_cont;
+		case SYS_APPLY_1:
+			goto sys_apply_eval_continue;
+		case SYS_APPLY_2:
+			goto sys_apply_conenv_continue;
+		case SYS_EVLIS_0:
+			goto sys_evlis_eval_continue;
+		case SYS_EVLIS_1:
+			goto sys_evlis_evlis_continue;
+		case SYS_EVIF:
+			goto sys_evif_eval_continue;
+		case SYS_CONENV:
+			goto sys_conenv_conenv_continue;
+		case SYS_REPL:
+			goto sys_execute_done;
 	}
-
 
 sys_execute_done:
 	return;
