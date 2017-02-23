@@ -177,44 +177,60 @@ Cell * make_symbol(char * name) {
 
 	if(cell_type == SYS_SYM_NUM) {
 		result = make_num(name);
+		result->is_atom = false;
+	}
+	else if (cell_type == SYS_SYM_STRING) {
+		result = make_string(name);
+		result->is_atom = false;
 	}
 	else {
-		Cell * prev_cell;
-		int num_of_cells = (strlen(name) + chars_per_pointer - 1) / chars_per_pointer;
+		result = pack_cell_string(name);
+		result->is_atom = true;
+	}
 
-		// Iterate through the chain of cells we will use to store the name
-		for(int cell_index = 0; cell_index < num_of_cells; ++cell_index) {
+	result->type = cell_type;
 
-			Cell * new_cell = get_free_cell();
+	return result;
+}
 
-			// Do required linking between the cells
-			if(cell_index == 0) {
-				result = new_cell;
-				prev_cell = result;
+Cell * pack_cell_string(char * string) {
+
+	Cell * result;
+	Cell * prev_cell;
+	Cell * new_cell;
+	int num_of_cells = (strlen(string) + chars_per_pointer - 1) / chars_per_pointer;
+
+	// Iterate through the chain of cells we will use to store the name
+	for(int cell_index = 0; cell_index < num_of_cells; ++cell_index) {
+
+		new_cell = get_free_cell();
+
+		// Do required linking between the cells
+		if(cell_index == 0) {
+			result = new_cell;
+			prev_cell = result;
+		}
+		else {
+			prev_cell->cdr = new_cell;
+			prev_cell = new_cell;
+		}
+
+		// Split up and copy the given string into the cells
+		for(int i = chars_per_pointer - 1; i >= 0; --i) {
+
+			int index = (cell_index * chars_per_pointer) + i;
+
+			if(index >= strlen(string)) {
+				new_cell->car = (Cell *)((uintptr_t)car(new_cell) << 8);
+				continue;
 			}
 			else {
-				prev_cell->cdr = new_cell;
-				prev_cell = new_cell;
-			}
-
-			// Split up and copy the given string into the cells
-			for(int i = chars_per_pointer - 1; i >= 0; --i) {
-
-				int index = (cell_index * chars_per_pointer) + i;
-
-				if(index >= strlen(name)) {
-					new_cell->car = (Cell *)((uintptr_t)car(new_cell) << 8);
-					continue;
-				}
-				else {
-					new_cell->car = (Cell *)(((uintptr_t)car(new_cell) << 8) | (uintptr_t)name[index]);
-				}
+				new_cell->car = (Cell *)(((uintptr_t)car(new_cell) << 8) | (uintptr_t)string[index]);
 			}
 		}
 	}
 
-	result->is_atom = true;
-	result->type = cell_type;
+	new_cell->cdr = machine->nil;
 
 	return result;
 }
@@ -257,12 +273,53 @@ Cell * make_num(char * digits) {
 	return result;
 }
 
+Cell * make_string(char * string) {
+
+	Cell * result = get_free_cell();
+	Cell * cell = result;
+
+	// Get rid of the quotes
+	int string_length = strlen(string) - 2;
+	char string_cpy[string_length + 1];
+	strncpy(string_cpy, string + 1, string_length);
+	string_cpy[string_length] = '\0';
+
+	// First element is a pointer to the string
+	cell->car = make_symbol(string_cpy);
+	cell->cdr = get_free_cell();
+	cell = cell->cdr;
+
+	// Second is a pointer to the end of the string
+	// Must find that now
+	Cell * temp_cell = result->car;
+	while(temp_cell->cdr != machine->nil) {
+		temp_cell = temp_cell->cdr;
+	}
+	cell->car = temp_cell;
+	cell->cdr = get_free_cell();
+	cell = cell->cdr;
+
+	// Third element holds the length of the string
+	Cell * num = get_free_cell();
+	num->car = (Cell *)(uintptr_t)(string_length);
+	num->type = SYS_SYM_NUM;
+	num->is_atom = false;
+	cell->car = num;
+	cell->cdr = machine->nil;
+
+	return result;
+}
+
 // Performs a binary search on the strings in machine->instructions to locate
 // a machine instruction.
 uint8_t determine_symbol_type(char * name) {
 
 	if(name[0] >= '0' && name[0] <= '9') {
 		return SYS_SYM_NUM;
+	}
+
+	if(name[0] == '"') {
+		return SYS_SYM_STRING;
 	}
 
 	uint8_t result = SYS_GENERAL;

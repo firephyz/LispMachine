@@ -53,8 +53,7 @@
 	#define SYS_SYM_NUM		31
 
 	// Tag for a string
-	#define SYS_SYM_CHAR 	32
-	#define SYS_SYM_STRING	33
+	#define SYS_SYM_STRING	32
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.

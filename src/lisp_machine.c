@@ -401,8 +401,9 @@ sys_apply:
 					// SYS_APPLY_0
 					sys_apply_eval_cont:
 
-					printf("\n > ");
+					printf(" > ");
 					print_list(machine->result);
+					printf("\n");
 					goto sys_execute_return;
 				default:
 					machine->calling_func = SYS_APPLY_1;
