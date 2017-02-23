@@ -366,15 +366,6 @@ sys_apply:
 						machine->result = NULL;
 					}
 					goto sys_execute_return;
-				case SYS_SYM_JOIN:
-					printf("JOIN");
-					goto sys_execute_return;
-				case SYS_SYM_SUBSTR:
-					printf("SUBSTR");
-					goto sys_execute_return;
-				case SYS_SYM_CHARAT:
-					printf("CHARAT");
-					goto sys_execute_return;
 				case SYS_SYM_IN:
 					printf(" <= ");
 					char * string = malloc(sizeof(char) * INPUT_BUFFER_LENGTH);
