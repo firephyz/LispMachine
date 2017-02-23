@@ -166,9 +166,10 @@ void execute() {
 	// 	       (fact (- x 1) (* result x))))	\
 	// 	 10 1)									\
 	// 	");
-	machine->args[0] = make_expression("((lambda (func)			\
-		                                   (func (eval (in))))	\
-		                                 (lambda (x) (func (eval (in)))))");
+	// machine->args[0] = make_expression("((lambda (func)			\
+	// 	                                   (func (eval (in))))	\
+	// 	                                 (lambda (x) (func (eval (in)))))");
+	machine->args[0] = make_expression("\"(if pred then else)\"");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -373,8 +374,12 @@ sys_apply:
 					printf("SUBSTR");
 					goto sys_execute_return;
 				case SYS_SYM_CHARAT:
-					printf("CHARAT");
-					goto sys_execute_return;
+					machine->args[0] = machine->args[1]->car;
+					machine->args[1] = machine->args[1]->cdr->car;
+					machine->args[2] = make_num("0");
+					machine->args[3] = machine->nil;
+
+					SYSCALL(sys_charat);
 				case SYS_SYM_IN:
 					printf(" <= ");
 					char * string = malloc(sizeof(char) * INPUT_BUFFER_LENGTH);
@@ -621,6 +626,39 @@ sys_lookup:
 
 			SYSCALL(sys_lookup);
 		}
+	}
+
+/***********************************************************
+ ************************* Charat **************************
+ ***********************************************************/
+
+// Will deal with each byte at a type. Once we go to another cell,
+// we will just subtract BYTES_PER_CAR from the target index and reset
+// the index counter to zero. This way, we don't need division.
+sys_charat:
+
+	if(machine->args[1]->car == machine->args[2]->car) {
+		machine->result = get_free_cell();
+		// Extract the character at the requested location
+		machine->result->car = (Cell *)(uintptr_t)(((int)(uintptr_t)machine->args[0]->car >> ((int)(uintptr_t)machine->args[1]->car)) & 0xFF);
+		machine->result->type = SYS_SYM_CHAR;
+		goto sys_execute_return;
+	}
+	else {
+		if((int)(uintptr_t)machine->args[2]->car == chars_per_pointer - 1) {
+			machine->args[0] = machine->args[0]->cdr;
+			machine->args[1]->car = (Cell *)(uintptr_t)((int)(uintptr_t)machine->args[1]->car - chars_per_pointer);
+			machine->args[2]->car = (Cell *)(uintptr_t)0;
+		}
+		else {
+			machine->args[0] = machine->args[0];
+			machine->args[1] = machine->args[1];
+			machine->args[2]->car = (Cell *)(uintptr_t)((int)(uintptr_t)machine->args[2]->car + 1);
+		}
+
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_charat);
 	}
 
 /***********************************************************

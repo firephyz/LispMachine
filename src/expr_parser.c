@@ -123,6 +123,11 @@ char * tokenizer_next(Tokenizer * tk) {
 			tk->token[0] = ')';
 			tk->token[1] = '\0';
 			return tk->token;
+		case '"':
+			++tk->index;
+			tk->token[0] = '"';
+			tk->token[1] = '\0';
+			return tk->token;
 		case ' ':
 			++tk->index;
 			return tokenizer_next(tk);
@@ -182,6 +187,10 @@ Cell * make_symbol(char * name) {
 	else if (cell_type == SYS_SYM_STRING) {
 		result = make_string(name);
 		result->is_atom = false;
+	}
+	else if (cell_type == SYS_SYM_CHAR) {
+		result = get_free_cell();
+		result->car = (Cell *)(uintptr_t)(name[1]);
 	}
 	else {
 		result = pack_cell_string(name);
@@ -320,6 +329,10 @@ uint8_t determine_symbol_type(char * name) {
 
 	if(name[0] == '"') {
 		return SYS_SYM_STRING;
+	}
+
+	if(name[0] == '\'') {
+		return SYS_SYM_CHAR;
 	}
 
 	uint8_t result = SYS_GENERAL;
