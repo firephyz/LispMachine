@@ -166,10 +166,9 @@ void execute() {
 	// 	       (fact (- x 1) (* result x))))	\
 	// 	 10 1)									\
 	// 	");
-	// machine->args[0] = make_expression("((lambda (func)			\
-	// 	                                   (func (eval (in))))	\
-	// 	                                 (lambda (x) (func (eval (in)))))");
-	machine->args[0] = make_expression("((lambda (x) (out x)) \">\")");
+	machine->args[0] = make_expression("((lambda (func)			\
+		                                   (func (eval (in))))	\
+		                                 (lambda (x) (func (eval (in)))))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;

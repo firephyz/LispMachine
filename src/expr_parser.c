@@ -191,7 +191,7 @@ Cell * make_symbol(char * name) {
 
 	if(cell_type == SYS_SYM_NUM) {
 		result = make_num(name);
-		result->is_atom = false;
+		result->is_atom = true;
 	}
 	else if (cell_type == SYS_SYM_STRING) {
 		result = make_string(name);
