@@ -169,7 +169,7 @@ void execute() {
 	// machine->args[0] = make_expression("((lambda (func)			\
 	// 	                                   (func (eval (in))))	\
 	// 	                                 (lambda (x) (func (eval (in)))))");
-	machine->args[0] = make_expression("((lambda (x) (out x)) \" \"");
+	machine->args[0] = make_expression("((lambda (x) (out x)) \">\")");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -758,12 +758,12 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 
 				if(strcmp(name1, name2) == 0) {
 					// Both beginnings are the same. But we have more cells to examine
-					if(cdr(cell1) != NULL && cdr(cell2) != NULL) {
+					if(cdr(cell1) != machine->nil && cdr(cell2) != machine->nil) {
 						cell1 = cell1->cdr;
 						cell2 = cell2->cdr;
 					}
 					//	Both symbols are the same and don't have a cdr. They are eq
-					else if(cdr(cell1) == NULL && cdr(cell2) == NULL) {
+					else if(cdr(cell1) == machine->nil && cdr(cell2) == machine->nil) {
 						return NULL;
 					}
 					else {

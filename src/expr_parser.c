@@ -426,7 +426,7 @@ char * get_symbol_name(Cell * sym) {
 	else if(sym->type == SYS_SYM_STRING) {
 		// Get the number of cells this name takes up
 		int cell_count = 1;
-		Cell * temp = sym;
+		Cell * temp = sym->car;
 		while(temp->cdr != machine->nil) {
 			++cell_count;
 			temp = temp->cdr;
