@@ -104,6 +104,7 @@ char * tokenizer_next(Tokenizer * tk) {
 		return NULL;
 	}
 
+	int symbol_length;
 	switch(tk->string[tk->index]) {
 		case '(':
 			if(tk->string[tk->index + 1] == ')') {
@@ -123,11 +124,6 @@ char * tokenizer_next(Tokenizer * tk) {
 			tk->token[0] = ')';
 			tk->token[1] = '\0';
 			return tk->token;
-		case '"':
-			++tk->index;
-			tk->token[0] = '"';
-			tk->token[1] = '\0';
-			return tk->token;
 		case ' ':
 			++tk->index;
 			return tokenizer_next(tk);
@@ -137,8 +133,21 @@ char * tokenizer_next(Tokenizer * tk) {
 		case '\n':
 			++tk->index;
 			return tokenizer_next(tk);
+		case '\"':;
+			symbol_length = index_of(tk->string + tk->index + 1, "\"") + 2;
+
+			if(symbol_length + 1 > tk->max_token_size) {
+				tk->token = realloc(tk->token, tk->max_token_size * 2);
+				tk->max_token_size *= 2;
+			}
+
+			memcpy(tk->token, tk->string + tk->index, symbol_length);
+			tk->token[symbol_length] = '\0';
+
+			tk->index += symbol_length;
+			return tk->token;
 		default:;
-			int symbol_length = index_of(tk->string + tk->index, "\t ()");
+			symbol_length = index_of(tk->string + tk->index, "\t ()\"");
 
 			// Handle the case that we are just making a symbol
 			if(symbol_length == -1) {
@@ -186,11 +195,12 @@ Cell * make_symbol(char * name) {
 	}
 	else if (cell_type == SYS_SYM_STRING) {
 		result = make_string(name);
-		result->is_atom = false;
+		result->is_atom = true;
 	}
 	else if (cell_type == SYS_SYM_CHAR) {
 		result = get_free_cell();
 		result->car = (Cell *)(uintptr_t)(name[1]);
+		result->is_atom = true;
 	}
 	else {
 		result = pack_cell_string(name);
@@ -397,44 +407,82 @@ uint8_t determine_symbol_type(char * name) {
 // Returns a string for the symbol given. String must be freed later
 char * get_symbol_name(Cell * sym) {
 
+	char * string;
+
 	// If the symbol is NIL, just return that to be printed
 	if(sym == machine->nil) {
-		char * string = malloc(sizeof(char) * 3);
+		string = malloc(sizeof(char) * 3);
 		string[0] = '(';
 		string[1] = ')';
 		string[2] = '\0';
-		return string;
 	}
-
 	// The cell might represent a number
-	if(sym->type == SYS_SYM_NUM) {
+	else if(sym->type == SYS_SYM_NUM) {
 		int max_num_length = 30;
-		char * string = malloc(sizeof(char) * max_num_length + 1);
+		string = malloc(sizeof(char) * max_num_length + 1);
 		snprintf(string, max_num_length + 1, "%d", (int)(uintptr_t)sym->car);
+	}
+	// It is a string
+	else if(sym->type == SYS_SYM_STRING) {
+		// Get the number of cells this name takes up
+		int cell_count = 1;
+		Cell * temp = sym;
+		while(temp->cdr != machine->nil) {
+			++cell_count;
+			temp = temp->cdr;
+		}
+
+		int string_length = chars_per_pointer * cell_count + 2;
+
+		// Allocate enough storage for the entire symbol name
+		string = malloc(sizeof(char) * string_length + 1);
+		int cell_index = 0;
+
+		// Copy symbol name into the result string
+		sym = sym->car; // Go to the start of the string
+		while(sym != machine->nil) {
+			memcpy(string + (cell_index * chars_per_pointer) + 1, &sym->car, chars_per_pointer);
+			sym = sym->cdr;
+			++cell_index;
+		}
+
+		string[0] = '\"';
+		// Place the end quote at the end of the string.
+		int index = (cell_count - 1) * chars_per_pointer;
+		do {
+			char character = string[index];
+			if(character == '\0') {
+				string[index] = '\"';
+				break;
+			}
+			++index;
+		} while(1);
+		string[string_length] = '\0';
+	}
+	else {
+		// Get the number of cells this name takes up
+		int cell_count = 1;
+		Cell * temp = sym;
+		while(temp->cdr != machine->nil) {
+			++cell_count;
+			temp = temp->cdr;
+		}
+
+		int string_length = chars_per_pointer * cell_count;
+
+		// Allocate enough storage for the entire symbol name
+		string = malloc(sizeof(char) * string_length + 1);
+		int cell_index = 0;
+
+		// Copy symbol name into the result string
+		while(sym != machine->nil) {
+			memcpy(string + (cell_index * chars_per_pointer), &sym->car, chars_per_pointer);
+			sym = sym->cdr;
+			++cell_index;
+		}
+
+		string[string_length] = '\0';
+	}
+
 		return string;
-	}
-
-	// Get the number of cells this name takes up
-	int cell_count = 1;
-	Cell * temp = sym;
-	while(temp->cdr != NULL) {
-		++cell_count;
-		temp = temp->cdr;
-	}
-
-	// Allocate enough storage for the entire symbol name
-	int string_length = chars_per_pointer * cell_count;
-	char * string = malloc(sizeof(char) * string_length + 1);
-	int cell_index = 0;
-
-	// Copy symbol name into the result string
-	while(sym != NULL) {
-		memcpy(string + (cell_index * chars_per_pointer), &sym->car, chars_per_pointer);
-		sym = sym->cdr;
-		++cell_index;
-	}
-
-	string[string_length] = '\0';
-
-	return string;
 }

@@ -169,7 +169,7 @@ void execute() {
 	// machine->args[0] = make_expression("((lambda (func)			\
 	// 	                                   (func (eval (in))))	\
 	// 	                                 (lambda (x) (func (eval (in)))))");
-	machine->args[0] = make_expression("\"(if pred then else)\"");
+	machine->args[0] = make_expression("((lambda (x) (out x)) \" \"");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -184,6 +184,10 @@ sys_eval:
 			machine->args[0] = machine->args[0];
 			machine->args[1] = machine->args[1];
 			SYSCALL(sys_lookup);
+		}
+		else if(machine->args[0]->type == SYS_SYM_STRING) {
+			machine->result = machine->args[0];
+			goto sys_execute_return;
 		}
 		else {
 			switch(machine->args[0]->type) {
