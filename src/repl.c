@@ -208,7 +208,7 @@ int print_list_helper(Cell *list, char *string, int *index, bool is_in_list) {
 		// Handle lists
 		else {
 			bool car_is_atom = list->car->is_atom;
-			bool cdr_is_pair = !list->cdr->is_atom;
+			bool cdr_is_pair = !(list->cdr == NULL) && !list->cdr->is_atom; // NULL means true. Thus is an atom
 			bool is_dotted_pair = car_is_atom & (!cdr_is_pair);
 
 			// We are in the middle of a list

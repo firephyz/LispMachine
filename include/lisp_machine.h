@@ -32,29 +32,30 @@
 	#define SYS_SYM_CDR		12
 	#define SYS_SYM_CHARAT	13
 	#define SYS_SYM_CONS	14
-	#define SYS_SYM_EQ 		15
-	#define SYS_SYM_EVAL	16
-	#define SYS_SYM_FALSE	17
-	#define SYS_SYM_IF		18
-	#define SYS_SYM_IN 		19
-	#define SYS_SYM_JOIN	20
-	#define SYS_SYM_LAMBDA	21
-	#define SYS_SYM_MOD		22
-	#define SYS_SYM_NOT		23
-	#define SYS_SYM_NULL	24
-	#define SYS_SYM_OR		25
-	#define SYS_SYM_OUT 	26
-	#define SYS_SYM_QUIT	27
-	#define SYS_SYM_QUOTE	28
-	#define SYS_SYM_SUBSTR	29
-	#define SYS_SYM_TRUE	30
+	#define SYS_SYM_DEFINE	15
+	#define SYS_SYM_EQ 		16
+	#define SYS_SYM_EVAL	17
+	#define SYS_SYM_FALSE	18
+	#define SYS_SYM_IF		19
+	#define SYS_SYM_IN 		20
+	#define SYS_SYM_JOIN	21
+	#define SYS_SYM_LAMBDA	22
+	#define SYS_SYM_MOD		23
+	#define SYS_SYM_NOT		24
+	#define SYS_SYM_NULL	25
+	#define SYS_SYM_OR		26
+	#define SYS_SYM_OUT 	27
+	#define SYS_SYM_QUIT	28
+	#define SYS_SYM_QUOTE	29
+	#define SYS_SYM_SUBSTR	30
+	#define SYS_SYM_TRUE	31
 
 	// Self evaluating number
-	#define SYS_SYM_NUM		31
+	#define SYS_SYM_NUM		32
 
 	// Tag for a string
-	#define SYS_SYM_STRING	32
-	#define SYS_SYM_CHAR	33
+	#define SYS_SYM_STRING	33
+	#define SYS_SYM_CHAR	34
 
 	/********************************* System Calling Functions ***************************/
 	// Used for machine.calling_func so that functions know where to return.

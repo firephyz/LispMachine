@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("* + - / < = > and atom? car cdr cons charat eq? eval false if in join lambda mod not null or out quit quote substr true");
+	init_instr_list("* + - / < = > and atom? car cdr charat cons define eq? eval false if in join lambda mod not null or out quit quote substr true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -169,6 +169,7 @@ void execute() {
 	machine->args[0] = make_expression("((lambda (func)			\
 		                                   (func (eval (in))))	\
 		                                 (lambda (x) (func (eval (in)))))");
+	//machine->args[0] = make_expression("(cons (quote a) (quote b))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -221,6 +222,21 @@ sys_eval:
 				goto sys_execute_return;
 			case SYS_SYM_QUOTE:
 				machine->result = machine->args[0]->cdr->car;
+				goto sys_execute_return;
+			case SYS_SYM_DEFINE:
+				machine->args[0] = machine->args[0];
+
+				Cell * temp = get_free_cell();
+				temp->car = machine->args[1]->car;
+				temp->cdr = machine->args[1]->cdr;
+
+				machine->args[1]->car = cons(machine->args[0]->cdr->car, machine->args[0]->cdr->cdr->car);
+				machine->args[1]->cdr = temp;
+
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
+				machine->result = NULL;
+
 				goto sys_execute_return;
 			default:
 				// Push args for later access

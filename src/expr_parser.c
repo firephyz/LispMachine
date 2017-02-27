@@ -147,7 +147,7 @@ char * tokenizer_next(Tokenizer * tk) {
 			tk->index += symbol_length;
 			return tk->token;
 		default:;
-			symbol_length = index_of(tk->string + tk->index, "\t ()\"");
+			symbol_length = index_of(tk->string + tk->index, "\t ()\"\n");
 
 			// Handle the case that we are just making a symbol
 			if(symbol_length == -1) {
