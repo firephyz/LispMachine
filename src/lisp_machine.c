@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("* + - / < = > and atom? car cdr charat cons define eq? eval false if in join lambda mod not null or out quit quote substr true");
+	init_instr_list("* + - / < = > and atom? begin car cdr charat cons define eq? eval false if in join lambda mod not null or out quit quote substr true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -238,6 +238,13 @@ sys_eval:
 				machine->result = NULL;
 
 				goto sys_execute_return;
+			case SYS_SYM_BEGIN:
+				machine->args[0] = machine->args[0]->cdr;
+				machine->args[1] = machine->args[1];
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
+
+				SYSCALL(sys_evbegin);
 			default:
 				// Push args for later access
 				machine->calling_func = SYS_EVAL;
@@ -554,6 +561,38 @@ sys_evif:
 	}
 
 /***********************************************************
+ ************************* Evbegin *************************
+ ***********************************************************/
+
+sys_evbegin:
+	if(machine->args[0] == machine->nil) {
+		// The result from the last eval is still in the register. Return that
+		machine->result = machine->result;
+		goto sys_execute_return;
+	}
+	else {
+		machine->calling_func = SYS_EVBEGIN;
+		push_system_args(0);
+
+		machine->args[0] = machine->args[0]->car;
+		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_eval);
+
+		// SYS_EVBEGIN
+		sys_evbegin_eval_cont:
+
+		machine->args[0] = machine->args[0]->cdr;
+		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_evbegin);
+	}
+
+/***********************************************************
  ************************* Evarth **************************
  ***********************************************************/
 
@@ -701,6 +740,8 @@ sys_execute_return:
 			goto sys_evlis_evlis_continue;
 		case SYS_EVIF:
 			goto sys_evif_eval_continue;
+		case SYS_EVBEGIN:
+			goto sys_evbegin_eval_cont;
 		case SYS_CONENV:
 			goto sys_conenv_conenv_continue;
 		case SYS_REPL:
