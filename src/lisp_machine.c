@@ -37,7 +37,7 @@ Lisp_Machine * init_machine() {
 	// Initialize the supported instruction lists
 	// null, false and true are pseudo system symbols. They get
 	// translated to something else during parsing
-	init_instr_list("* + - / < = > and atom? car cdr cons charat eq? eval false if in join lambda mod not null or out quit quote substr true");
+	init_instr_list("* + - / < = > and atom? begin car cdr charat cons define eq? eval false if in join lambda mod not null or out quit quote substr true");
 
 	// Initialize the machine system environment
 	machine->sys_stack = machine->nil;
@@ -47,7 +47,7 @@ Lisp_Machine * init_machine() {
 	machine->cycle_count = 0;
 
 	if(verbose_flag) {
-		printf("Machine initialized!\n");
+		printf("Machine initialized!\n\n");
 	}
 
 	return machine;
@@ -81,15 +81,6 @@ void store_cell(Cell * cell) {
 // Pushes the given number of arguments from the machine->args registers
 // onto the system stack. Tops it with the calling function record.
 void push_system_args(int arg_count) {
-
-	// If all the function call needs is a return address, then we will signal that.
-	// Then, this stack frame can simply be replaced by then
-	// if(arg_count == 0) {
-	// 	machine->needs_return_address = false;
-	// }
-	// else {
-	// 	machine->needs_return_address = true;
-	// }
 
 	// Push arguments still needed for calling function
 	for(int i = 0; i < arg_count; ++i) {
@@ -166,9 +157,11 @@ void execute() {
 	// 	       (fact (- x 1) (* result x))))	\
 	// 	 10 1)									\
 	// 	");
-	machine->args[0] = make_expression("((lambda (func)			\
-		                                   (func (eval (in))))	\
-		                                 (lambda (x) (func (eval (in)))))");
+	machine->args[0] = make_expression("((lambda (func)				\
+		                                   (func))					\
+		                                 (lambda () (begin (eval (in)) (func))))");
+	//machine->args[0] = make_expression("(cons (quote a) (quote b))");
+	//machine->args[0] = make_expression("(begin (out \"Test\") (quit))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -183,6 +176,10 @@ sys_eval:
 			machine->args[0] = machine->args[0];
 			machine->args[1] = machine->args[1];
 			SYSCALL(sys_lookup);
+		}
+		else if(machine->args[0]->type == SYS_SYM_STRING) {
+			machine->result = machine->args[0];
+			goto sys_execute_return;
 		}
 		else {
 			switch(machine->args[0]->type) {
@@ -218,6 +215,28 @@ sys_eval:
 			case SYS_SYM_QUOTE:
 				machine->result = machine->args[0]->cdr->car;
 				goto sys_execute_return;
+			case SYS_SYM_DEFINE:
+				machine->args[0] = machine->args[0];
+
+				Cell * temp = get_free_cell();
+				temp->car = machine->args[1]->car;
+				temp->cdr = machine->args[1]->cdr;
+
+				machine->args[1]->car = cons(machine->args[0]->cdr->car, machine->args[0]->cdr->cdr->car);
+				machine->args[1]->cdr = temp;
+
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
+				machine->result = NULL;
+
+				goto sys_execute_return;
+			case SYS_SYM_BEGIN:
+				machine->args[0] = machine->args[0]->cdr;
+				machine->args[1] = machine->args[1];
+				machine->args[2] = machine->nil;
+				machine->args[3] = machine->nil;
+
+				SYSCALL(sys_evbegin);
 			default:
 				// Push args for later access
 				machine->calling_func = SYS_EVAL;
@@ -366,6 +385,19 @@ sys_apply:
 						machine->result = NULL;
 					}
 					goto sys_execute_return;
+				case SYS_SYM_JOIN:
+					printf("JOIN");
+					goto sys_execute_return;
+				case SYS_SYM_SUBSTR:
+					printf("SUBSTR");
+					goto sys_execute_return;
+				case SYS_SYM_CHARAT:
+					machine->args[0] = machine->args[1]->car;
+					machine->args[1] = machine->args[1]->cdr->car;
+					machine->args[2] = make_num("0");
+					machine->args[3] = machine->nil;
+
+					SYSCALL(sys_charat);
 				case SYS_SYM_IN:
 					printf(" <= ");
 					char * string = malloc(sizeof(char) * INPUT_BUFFER_LENGTH);
@@ -392,8 +424,9 @@ sys_apply:
 					// SYS_APPLY_0
 					sys_apply_eval_cont:
 
-					printf("\n > ");
+					printf(" > ");
 					print_list(machine->result);
+					printf("\n");
 					goto sys_execute_return;
 				default:
 					machine->calling_func = SYS_APPLY_1;
@@ -520,6 +553,38 @@ sys_evif:
 	}
 
 /***********************************************************
+ ************************* Evbegin *************************
+ ***********************************************************/
+
+sys_evbegin:
+	if(machine->args[0] == machine->nil) {
+		// The result from the last eval is still in the register. Return that
+		machine->result = machine->result;
+		goto sys_execute_return;
+	}
+	else {
+		machine->calling_func = SYS_EVBEGIN;
+		push_system_args(2);
+
+		machine->args[0] = machine->args[0]->car;
+		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_eval);
+
+		// SYS_EVBEGIN
+		sys_evbegin_eval_cont:
+
+		machine->args[0] = machine->args[0]->cdr;
+		machine->args[1] = machine->args[1];
+		machine->args[2] = machine->nil;
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_evbegin);
+	}
+
+/***********************************************************
  ************************* Evarth **************************
  ***********************************************************/
 
@@ -614,6 +679,39 @@ sys_lookup:
 	}
 
 /***********************************************************
+ ************************* Charat **************************
+ ***********************************************************/
+
+// Will deal with each byte at a type. Once we go to another cell,
+// we will just subtract BYTES_PER_CAR from the target index and reset
+// the index counter to zero. This way, we don't need division.
+sys_charat:
+
+	if(machine->args[1]->car == machine->args[2]->car) {
+		machine->result = get_free_cell();
+		// Extract the character at the requested location
+		machine->result->car = (Cell *)(uintptr_t)(((int)(uintptr_t)machine->args[0]->car >> ((int)(uintptr_t)machine->args[1]->car)) & 0xFF);
+		machine->result->type = SYS_SYM_CHAR;
+		goto sys_execute_return;
+	}
+	else {
+		if((int)(uintptr_t)machine->args[2]->car == chars_per_pointer - 1) {
+			machine->args[0] = machine->args[0]->cdr;
+			machine->args[1]->car = (Cell *)(uintptr_t)((int)(uintptr_t)machine->args[1]->car - chars_per_pointer);
+			machine->args[2]->car = (Cell *)(uintptr_t)0;
+		}
+		else {
+			machine->args[0] = machine->args[0];
+			machine->args[1] = machine->args[1];
+			machine->args[2]->car = (Cell *)(uintptr_t)((int)(uintptr_t)machine->args[2]->car + 1);
+		}
+
+		machine->args[3] = machine->nil;
+
+		SYSCALL(sys_charat);
+	}
+
+/***********************************************************
  ************************* Return **************************
  ***********************************************************/
 
@@ -634,6 +732,8 @@ sys_execute_return:
 			goto sys_evlis_evlis_continue;
 		case SYS_EVIF:
 			goto sys_evif_eval_continue;
+		case SYS_EVBEGIN:
+			goto sys_evbegin_eval_cont;
 		case SYS_CONENV:
 			goto sys_conenv_conenv_continue;
 		case SYS_REPL:
@@ -706,12 +806,12 @@ Cell * eq(Cell * cell1, Cell * cell2) {
 
 				if(strcmp(name1, name2) == 0) {
 					// Both beginnings are the same. But we have more cells to examine
-					if(cdr(cell1) != NULL && cdr(cell2) != NULL) {
+					if(cdr(cell1) != machine->nil && cdr(cell2) != machine->nil) {
 						cell1 = cell1->cdr;
 						cell2 = cell2->cdr;
 					}
 					//	Both symbols are the same and don't have a cdr. They are eq
-					else if(cdr(cell1) == NULL && cdr(cell2) == NULL) {
+					else if(cdr(cell1) == machine->nil && cdr(cell2) == machine->nil) {
 						return NULL;
 					}
 					else {

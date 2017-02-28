@@ -18,7 +18,7 @@
 	int index_of(char * string, char * targets);
 	Cell * make_symbol(char * name);
 	Cell * make_num(char * digits);
-	Cell * make_string(char * string);
+	Cell * make_string(char *string);
 	Cell * pack_cell_string(char * string);
 	char * get_symbol_name(Cell * sym);
 	uint8_t determine_symbol_type(char * name);

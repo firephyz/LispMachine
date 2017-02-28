@@ -142,4 +142,4 @@
 ;(parse-string "(define (convert-mpair list) (if (mpair? list) (cons (convert-mpair (mcar list)) (convert-mpair (mcdr list))) list))")
 ;(parse-string-r "(a () (b . ()))")
 ;(parse-string-r "(define (convert-mpair list) (if (mpair? list) (cons (convert-mpair (mcar list)) (convert-mpair (mcdr list))) list))")
-(print-list (parse-string-r "(a . b)") #f)
+(parse-string-r "(1)")
