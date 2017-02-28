@@ -47,7 +47,7 @@ Lisp_Machine * init_machine() {
 	machine->cycle_count = 0;
 
 	if(verbose_flag) {
-		printf("Machine initialized!\n");
+		printf("Machine initialized!\n\n");
 	}
 
 	return machine;
@@ -81,15 +81,6 @@ void store_cell(Cell * cell) {
 // Pushes the given number of arguments from the machine->args registers
 // onto the system stack. Tops it with the calling function record.
 void push_system_args(int arg_count) {
-
-	// If all the function call needs is a return address, then we will signal that.
-	// Then, this stack frame can simply be replaced by then
-	// if(arg_count == 0) {
-	// 	machine->needs_return_address = false;
-	// }
-	// else {
-	// 	machine->needs_return_address = true;
-	// }
 
 	// Push arguments still needed for calling function
 	for(int i = 0; i < arg_count; ++i) {
@@ -166,10 +157,11 @@ void execute() {
 	// 	       (fact (- x 1) (* result x))))	\
 	// 	 10 1)									\
 	// 	");
-	machine->args[0] = make_expression("((lambda (func)			\
-		                                   (func (eval (in))))	\
-		                                 (lambda (x) (func (eval (in)))))");
+	machine->args[0] = make_expression("((lambda (func)				\
+		                                   (func))					\
+		                                 (lambda () (begin (eval (in)) (func))))");
 	//machine->args[0] = make_expression("(cons (quote a) (quote b))");
+	//machine->args[0] = make_expression("(begin (out \"Test\") (quit))");
 	machine->args[1] = make_expression("()");
 	machine->args[2] = machine->nil;
 	machine->args[3] = machine->nil;
@@ -572,7 +564,7 @@ sys_evbegin:
 	}
 	else {
 		machine->calling_func = SYS_EVBEGIN;
-		push_system_args(0);
+		push_system_args(2);
 
 		machine->args[0] = machine->args[0]->car;
 		machine->args[1] = machine->args[1];
