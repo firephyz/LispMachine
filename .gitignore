@@ -1,3 +1,10 @@
 /bin/
 /build/
 *.rkt~
+
+/fpga/*
+!/fpga/src/
+!/fpga/LispMachine_FPGA.qpf
+!/fpga/LispMachine_FPGA.qws
+!/fpga/LispMachine_FPGA.qsf
+!/fpga/LispMahcine_FPGA.qdf

@@ -1,0 +1,11 @@
+module ALU(in_0, in_1, result, opcode);
+
+	parameter data_width = 16;
+	parameter opcode_width = 4;
+
+	input [data_width - 1:0] in_0, in_1;
+	input [opcode_width - 1:0] opcode;
+	
+	output [data_width - 1:0] result;
+
+endmodule

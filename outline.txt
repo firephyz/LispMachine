@@ -1,0 +1,98 @@
+memory unit (address[addr_width - 1, 0], read, data[cell_width - 1, 0])
+ - cell:
+    - car
+    - cdr
+    - type
+    - tag
+ - cell_width = 2 * addr_width + type_info + tag_info
+ - types
+    - var
+    - num
+    - return_record
+    - instr
+ - tags
+    - false
+    - true
+    - null
+    - everything in the biu and alu
+evaluator (curr_func, next_func)
+ - eval
+ 	- args[0]
+      - atom?
+      - type
+      - tag
+      - car
+    - car(args[0])
+      - type
+
+    biu(args[0], null, atom?)
+    {
+    	type(args[0]) = general
+    	{
+    		set_args(*,*,null,null)
+    		call(lookup)
+    	}
+    	{
+    		type(args[0]) = num
+    		{
+    			set_result(args[0])
+    			call(return)
+    		}
+    		{
+	    		switch(tag(args[0]))
+	    		{
+	    			null
+	    				set_result(nil)
+	    			false
+	    				set_result(nil)
+	    			true
+	    				set_result(true)
+	    		}
+	    		call(return)
+	    	}
+    	}
+    }
+    {
+    	switch(tag(car(args[0])))
+    	{
+    		if
+    		{
+    			set_args
+    			call(evif)
+    		}
+    	}
+    }
+ - apply
+ - evlis
+ - evif
+ - conenv
+ - lookup
+ - evbegin
+ - return
+biu (cell1, cell2, result, op, ctrl_lines)
+ - car
+ - cdr
+ - cons
+ - eq?
+ - atom?
+ - quote
+ - if
+ - lambda
+ - begin
+ - define
+ - eval
+ - *in
+ - *out
+ - quit
+alu (in0, in1, out, op)
+ - add
+ - sub
+ - mult
+ - and
+ - or
+ - not
+ - lshift
+ - rshift
+ - less
+ - greater
+ - equal
