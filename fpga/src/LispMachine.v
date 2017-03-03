@@ -1,8 +1,9 @@
 `include "ALU.vh"
 
-module LispMachine(test);
+module LispMachine(opcode, result);
 
-	output wire test;
+	input wire [`alu_opcode_width - 1:0] opcode;
+	output wire [`alu_data_width - 1:0] result;
 
 	reg [`alu_data_width - 1:0] alu_in_0, alu_in_1;
 	reg [`alu_opcode_width - 1:0] alu_opcode;
@@ -13,6 +14,12 @@ module LispMachine(test);
 			  .result(alu_result),
 			  .opcode(alu_opcode));
 			  
-	assign test = alu_result;
+	assign result = alu_result;
+	
+	always@(*) begin
+		alu_opcode = opcode;
+		alu_in_0 = 5;
+		alu_in_1 = 7;
+	end
 
 endmodule
