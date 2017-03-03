@@ -4,7 +4,7 @@
 
 /fpga/*
 !/fpga/src/
+/fpga/src/*.bak
 !/fpga/LispMachine_FPGA.qpf
 !/fpga/LispMachine_FPGA.qws
 !/fpga/LispMachine_FPGA.qsf
-!/fpga/LispMahcine_FPGA.qdf
