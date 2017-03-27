@@ -3,6 +3,10 @@
 *.rkt~
 
 /fpga/*
+!/fpga/*.cdf
+!/fpga/*.hex
+!/fpga/*.qip
+!/fpga/*.v
 !/fpga/src/
 /fpga/src/*.bak
 !/fpga/LispMachine_FPGA.qpf
