@@ -1,9 +1,9 @@
 `include "ALU.vh"
 `include "memory_unit.vh"
 
-module LispMachine(clk, rst);
+module LispMachine(power, clk, rst);
 
-	input clk, rst;
+	input power, clk, rst;
 
 	// ALU interface
 	reg [`alu_data_width - 1:0] alu_in_0, alu_in_1;
@@ -16,53 +16,61 @@ module LispMachine(clk, rst);
 			  .opcode(alu_opcode));
 	
 	// Memory unit interface
-	reg mem_car, mem_cdr, mem_cons;
-	reg [`memory_data_width - 1:0] mem_data_in;
-	wire [`memory_data_width - 1:0] mem_data_out;
+	reg [1:0] func;
+	reg execute;
+	reg [`memory_addr_width - 1:0] addr0, addr1;
+	wire [`memory_addr_width - 1:0] addr_out;
+	wire [`memory_data_width - 1:0] data_out;
 	wire mem_ready;
 	
-	memory_unit mem(.get_car (mem_car),
-					    .get_cdr (mem_cdr),
-						 .get_cons (mem_cons),
-					    .data_in (mem_data_in),
-					    .data_out (mem_data_out),
+	memory_unit mem(.func (func),
+						 .execute (execute),
+						 .addr0 (addr0),
+						 .addr1 (addr1),
+						 .addr_out (addr_out),
+						 .data_out (data_out),
 					    .is_ready (mem_ready),
+						 .power (power),
 					    .clk (clk),
 					    .rst (rst));
 						 
-	reg [3:0] counter;
+	reg [6:0] counter;
+	reg [3:0] car_count;
 	
 	always@(posedge clk or negedge rst) begin
 		if (!rst) begin
 			counter <= 0;
 			
-			mem_car <= 0;
-			mem_data_in <= 0;
+			car_count <= 0;
+			
+			func <= 0;
+			execute <= 0;
+			addr0 <= 0;
+			addr1 <= 0;
 		end
-		else if (counter == 10) begin
-			counter <= 11;
-		
-			mem_car <= 1;
-			mem_data_in <= 24'h002405;
-		end
-		else if (counter < 10) begin
+		else if (power) begin
 			counter <= counter + 1;
 		
-			mem_car <= 0;
-			mem_data_in <= 24'h000000;
-		end
-		else if (counter == 11) begin
-			mem_car <= 0;
-			counter <= 12;
-		end
-		else begin
-			if(!mem_ready) begin
-				mem_car <= 0;
-				mem_data_in <= 24'h000000;
+			if(counter == 10) begin
+				addr0 <= 4;
+				func <= `GET_CONTENTS;
+				execute <= 1;
+				
+				car_count <= 1;
 			end
-			else begin
-				mem_car <= 1;
-				mem_data_in <= mem_data_out;
+			else if (counter > 10) begin
+				if(mem_ready) begin
+					addr0 <= data_out[19:10];
+					func <= `GET_CONTENTS;
+					execute <= 1;
+					
+					car_count <= car_count + 1;
+				end
+				else begin
+					addr0 <= 0;
+					func <= 0;
+					execute <= 0;
+				end
 			end
 		end
 	end
