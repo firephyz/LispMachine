@@ -51,23 +51,62 @@ module LispMachine(power, clk, rst);
 		else if (power) begin
 			counter <= counter + 1;
 		
-			if(counter == 10) begin
-				addr0 <= 4;
-				func <= `GET_CONTENTS;
-				execute <= 1;
-				
-				car_count <= 1;
-			end
-			else if (counter > 10) begin
+			if(counter >= 10) begin
 				if(mem_ready) begin
-					addr0 <= data_out[19:10];
-					func <= `GET_CONTENTS;
-					execute <= 1;
-					
-					car_count <= car_count + 1;
+					if(car_count == 0) begin
+						addr0 <= 1;
+						addr1 <= 2;
+						func <= `GET_CONS;
+						execute <= 1;
+						
+						car_count <= 1;
+					end
+					else if(car_count == 1) begin
+						addr0 <= addr_out;
+						addr1 <= 3;
+						func <= `GET_CONS;
+						execute <= 1;
+						
+						car_count <= 2;
+					end
+					else if(car_count == 2) begin
+						addr0 <= addr_out;
+						addr1 <= 4;
+						func <= `GET_CONS;
+						execute <= 1;
+						
+						car_count <= 3;
+					end
+					else if (car_count == 3) begin
+						addr0 <= addr_out;
+						func <= `GET_CAR;
+						execute <= 1;
+						
+						car_count <= 4;
+					end
+					else if (car_count == 4) begin
+						addr0 <= addr_out;
+						func <= `GET_CAR;
+						execute <= 1;
+						
+						car_count <= 5;
+					end
+					else if (car_count == 5) begin
+						addr0 <= addr_out;
+						func <= `GET_CONTENTS;
+						execute <= 1;
+						
+						car_count <= 6;
+					end
+					else begin
+						addr0 <= 0;
+						func <= 0;
+						execute <= 0;
+					end
 				end
 				else begin
 					addr0 <= 0;
+					addr1 <= 0;
 					func <= 0;
 					execute <= 0;
 				end
