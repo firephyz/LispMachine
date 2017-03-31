@@ -121,6 +121,12 @@ public class Tokenizer {
 		else if(string.equals("quote")) {
 			return 15;
 		}
+		else if(string.equals("define")) {
+			return 16;
+		}
+		else if(string.equals("begin")) {
+			return 17;
+		}
 		else return -1;
 	}
 }

@@ -12,7 +12,7 @@ public class Main {
 		//String string = "((lambda (x y) (if x y (quote nope))) x)";
 		//String string = "((quote true) (quote false))";
 		//String string = "(quote tes)";
-		String string = "((lambda (x) x) (quote a))";
+		String string = "(if a b c)";
 		
 		Cell result = parseString(string);
 		
@@ -275,6 +275,12 @@ public class Main {
 		}
 		else if(string.equals("quote")) {
 			return 15;
+		}
+		else if(string.equals("define")) {
+			return 16;
+		}
+		else if(string.equals("begin")) {
+			return 17;
 		}
 		else return -1;
 	}

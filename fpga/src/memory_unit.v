@@ -8,7 +8,7 @@
 
 `include "memory_unit.vh"
 
-module memory_unit(func, execute, addr0, addr1, addr_out, data_out, is_ready, power, clk, rst, state, free_mem, mem_addr, mem_data_out);
+module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, is_ready, power, clk, rst);
 
 	input power, clk, rst;
 
@@ -16,6 +16,7 @@ module memory_unit(func, execute, addr0, addr1, addr_out, data_out, is_ready, po
 	input [1:0] func;
 	input execute;
 	input [`memory_addr_width - 1:0] addr0, addr1;
+	input [3:0] type_info;
 	
 	// Signal wires for this module
 	reg is_ready_reg;
@@ -25,16 +26,16 @@ module memory_unit(func, execute, addr0, addr1, addr_out, data_out, is_ready, po
 	output reg [`memory_data_width - 1:0] data_out;
 	
 	// Interface with the ram module
-	output reg [`memory_addr_width - 1:0] mem_addr;
+	reg [`memory_addr_width - 1:0] mem_addr;
 	reg mem_write;
 	reg [`memory_data_width - 1:0] mem_data_in;
-	output wire [`memory_data_width - 1:0] mem_data_out;
+	wire [`memory_data_width - 1:0] mem_data_out;
 	
 	// Internal regs and wires
 	reg need_car_or_cdr; // 0 for car, 1 for cdr
 	reg should_fetch_data;
-	output reg [`memory_addr_width - 1:0] free_mem;
-	output reg [3:0] state;
+	reg [`memory_addr_width - 1:0] free_mem;
+	reg [3:0] state;
 	
 	// States
 	parameter STATE_INIT_SETUP 	= 4'h0,
@@ -114,7 +115,7 @@ module memory_unit(func, execute, addr0, addr1, addr_out, data_out, is_ready, po
 								state <= STATE_READ_WAIT_0;
 							end
 							`GET_CONS: begin
-								mem_data_in <= {4'h0, addr0, addr1};
+								mem_data_in <= {type_info, addr0, addr1};
 								mem_addr <= free_mem;
 								mem_write <= 1;
 								state <= STATE_CONS_WAIT;
@@ -161,7 +162,7 @@ module memory_unit(func, execute, addr0, addr1, addr_out, data_out, is_ready, po
 				STATE_CONS_WAIT: begin
 					mem_write <= 0;
 					addr_out <= free_mem;
-					free_mem <= free_mem + 1;
+					free_mem <= free_mem + `memory_addr_width'b1;
 					
 					is_ready_reg <= 1;
 					

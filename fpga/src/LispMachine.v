@@ -15,18 +15,20 @@ module LispMachine(power, clk, rst);
 			  .result(alu_result),
 			  .opcode(alu_opcode));
 	
-	// Memory unit interface
-	reg [1:0] func;
-	reg execute;
-	reg [`memory_addr_width - 1:0] addr0, addr1;
+	// Eval unit to memory unit interface
+	wire [1:0] mem_func;
+	wire mem_execute;
+	wire [`memory_addr_width - 1:0] addr0, addr1;
+	wire [3:0] type_info;
 	wire [`memory_addr_width - 1:0] addr_out;
 	wire [`memory_data_width - 1:0] data_out;
 	wire mem_ready;
 	
-	memory_unit mem(.func (func),
-						 .execute (execute),
+	memory_unit mem(.func (mem_func),
+						 .execute (mem_execute),
 						 .addr0 (addr0),
 						 .addr1 (addr1),
+						 .type_info (type_info),
 						 .addr_out (addr_out),
 						 .data_out (data_out),
 					    .is_ready (mem_ready),
@@ -34,84 +36,16 @@ module LispMachine(power, clk, rst);
 					    .clk (clk),
 					    .rst (rst));
 						 
-	reg [6:0] counter;
-	reg [3:0] car_count;
-	
-	always@(posedge clk or negedge rst) begin
-		if (!rst) begin
-			counter <= 0;
-			
-			car_count <= 0;
-			
-			func <= 0;
-			execute <= 0;
-			addr0 <= 0;
-			addr1 <= 0;
-		end
-		else if (power) begin
-			counter <= counter + 1;
-		
-			if(counter >= 10) begin
-				if(mem_ready) begin
-					if(car_count == 0) begin
-						addr0 <= 1;
-						addr1 <= 2;
-						func <= `GET_CONS;
-						execute <= 1;
-						
-						car_count <= 1;
-					end
-					else if(car_count == 1) begin
-						addr0 <= addr_out;
-						addr1 <= 3;
-						func <= `GET_CONS;
-						execute <= 1;
-						
-						car_count <= 2;
-					end
-					else if(car_count == 2) begin
-						addr0 <= addr_out;
-						addr1 <= 4;
-						func <= `GET_CONS;
-						execute <= 1;
-						
-						car_count <= 3;
-					end
-					else if (car_count == 3) begin
-						addr0 <= addr_out;
-						func <= `GET_CAR;
-						execute <= 1;
-						
-						car_count <= 4;
-					end
-					else if (car_count == 4) begin
-						addr0 <= addr_out;
-						func <= `GET_CAR;
-						execute <= 1;
-						
-						car_count <= 5;
-					end
-					else if (car_count == 5) begin
-						addr0 <= addr_out;
-						func <= `GET_CONTENTS;
-						execute <= 1;
-						
-						car_count <= 6;
-					end
-					else begin
-						addr0 <= 0;
-						func <= 0;
-						execute <= 0;
-					end
-				end
-				else begin
-					addr0 <= 0;
-					addr1 <= 0;
-					func <= 0;
-					execute <= 0;
-				end
-			end
-		end
-	end
+	eval_unit eval(.mem_func (mem_func),
+						.mem_execute (mem_execute),
+						.mem_addr0 (addr0),
+						.mem_addr1 (addr1),
+						.mem_type_info (type_info),
+						.mem_addr (addr_out),
+						.mem_data (data_out),
+						.mem_ready (mem_ready),
+						.power (power),
+						.clk (clk),
+						.rst (rst));
 
 endmodule
