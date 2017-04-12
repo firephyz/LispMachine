@@ -1,0 +1,9 @@
+
+public abstract class ParseTree {
+	
+	protected TreeNode node;
+	
+	public ParseTree(TreeNode data) {
+		node = data;
+	}
+}

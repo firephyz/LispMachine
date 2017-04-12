@@ -1,0 +1,16 @@
+package Tree;
+import Parser.Token;
+import Parser.TokenType;
+
+
+public class TreeNode {
+	
+	private Token data;
+	
+	public TreeNode(Token type) {
+		data = type;
+	}
+	
+	public TokenType getType() {return data.getType();}
+	public String getData() {return data.getData();}
+}

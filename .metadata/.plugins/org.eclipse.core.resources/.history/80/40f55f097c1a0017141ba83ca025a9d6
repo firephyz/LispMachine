@@ -1,0 +1,28 @@
+
+public class Tokenizer {
+
+	private String string;
+	private int index;
+	
+	public Tokenizer(String str) {
+		string = str;
+		index = 0;
+	}
+	
+	public Token next() {
+		switch(string.charAt(index)) {
+		case 'λ':
+			index += 3;
+			return new Token(TokenType.Lambda, string.substring(index - 2, index - 1));
+		case '(':
+			index++;
+			return new Token(TokenType.L_Parens, null);
+		case ')':
+			index++;
+			return new Token(TokenType.R_Parens, null);
+		default:
+			index++;
+			return new Token(TokenType.Variable, string.substring(index - 1, index));
+		}
+	}
+}

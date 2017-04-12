@@ -1,0 +1,81 @@
+package Parser;
+import java.util.Stack;
+
+import Tree.ParseNodeType;
+import Tree.ParseTree;
+import Tree.TreeNode;
+
+
+public class Parser {
+	
+	private String string;
+	
+	public Parser(String str) {
+		string = str;
+	}
+	
+	@SuppressWarnings("incomplete-switch")
+	public ParseTree parse() {
+		
+		Tokenizer tk = new Tokenizer(string);
+		ParseTree root = new ParseTree();
+		ParseTree tree = root;
+		
+		Stack<ParseTree> stack = new Stack<>();
+		stack.add(tree);
+		
+		if(string.length() == 0) {
+			return null;
+		}
+		
+		Token t = tk.next();
+		
+		do {
+			if(t.getType() == TokenType.L_Parens) {
+				ParseTree new_node = null;
+				
+				// See if it's a function or application
+				t = tk.next();
+				switch(t.getType()) {
+				case Lambda:
+					new_node = new ParseTree(ParseNodeType.Function, t.getData());
+					t = tk.next();
+					break;
+				case Variable:
+					new_node = new ParseTree(ParseNodeType.Application, null);
+					break;
+				}
+				
+				// Add this new branch
+				tree = addNewBranch(stack, new_node);
+			}
+			else if(t.getType() == TokenType.Variable) {
+				tree = addNewBranch(stack, new ParseTree(ParseNodeType.Variable, t.getData()));
+			}
+			else {
+				// Restore parent branch
+				tree = stack.pop();
+				break;
+			}
+			
+		} while(tk.hasNext());
+		
+		return root;
+	}
+	
+	private void addNewBranch(Stack<ParseTree> s, ParseTree new_node) {
+		
+		// Add this new branch to the right side of the tree
+		if(tree.getLeftChild() == null) {
+			tree.addLeftChild(new_node);
+		}
+		else {
+			tree.addRightChild(new_node);
+		}
+		
+		// Update current branch
+		s.add(tree);
+		
+		return tree;
+	}
+}

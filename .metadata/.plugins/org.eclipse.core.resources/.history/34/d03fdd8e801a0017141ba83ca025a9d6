@@ -1,0 +1,31 @@
+
+public class TreeLeaf extends ParseTree {
+
+	public TreeLeaf(TreeNode data) {
+		super(data);
+	}
+
+	@Override
+	public void addLeftChild(ParseTree tree) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addRightChild(ParseTree tree) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getNodeData() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TokenType getNodeType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

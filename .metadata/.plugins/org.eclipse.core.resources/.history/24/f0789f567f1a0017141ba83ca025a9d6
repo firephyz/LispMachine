@@ -1,0 +1,31 @@
+
+public class Parser {
+	
+	private String string;
+	
+	public Parser(String str) {
+		string = str;
+	}
+	
+	public ParseTree parse() {
+		
+		Tokenizer tk = new Tokenizer(string);
+		ParseTree result = new ParseTree();
+		ParseTree tree = result;
+		
+		if(string.length() == 0) {
+			return null;
+		}
+		
+		do {
+			Token t = tk.next();
+			
+			switch(t.getType()) {
+			case L_Parens:;
+			case R_Parens:;
+			case Lambda:;
+			case Variable:;
+			}
+		} while(tk.hasNext());
+	}
+}

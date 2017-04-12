@@ -1,0 +1,12 @@
+
+public class TreeBranch extends ParseTree {
+
+	private ParseTree leftChild;
+	private ParseTree rightChild;
+	
+	public TreeBranch(ParseTree left, ParseTree right, TreeNode data) {
+		node = data;
+		leftChild = left;
+		rightChild = right;
+	}
+}

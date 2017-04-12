@@ -1,0 +1,15 @@
+import Token;
+import TokenType;
+
+
+public class TreeNode {
+	
+	private Token data;
+	
+	public TreeNode(Token type) {
+		data = type;
+	}
+	
+	public TokenType getType() {return data.getType();}
+	public String getData() {return data.getData();}
+}

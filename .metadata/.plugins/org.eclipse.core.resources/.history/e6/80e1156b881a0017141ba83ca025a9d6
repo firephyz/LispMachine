@@ -1,0 +1,32 @@
+package Tree;
+import Parser.Token;
+import Parser.TokenType;
+
+
+public class TreeNode {
+	
+	private String data;
+	private ParseNodeType type;
+	
+	public TreeNode(String data, ParseNodeType type) {
+		this.data = data;
+		this.type = type;
+	}
+	
+	public ParseNodeType getType() {return type;}
+	public String getData() {return data;}
+	
+	@Override
+	public String toString() {
+		String result = "[" + type.toString();
+		
+		if(data != null) {
+			result += ", " + data + "]";
+		}
+		else {
+			result += "]";
+		}
+		
+		return result;
+	}
+}

@@ -1,0 +1,21 @@
+
+public class Tokenizer {
+
+	private String string;
+	private int index;
+	
+	public Tokenizer(String str) {
+		string = str;
+		index = 0;
+	}
+	
+	public Token next() {
+		switch(string.charAt(index)) {
+		case 'λ':;
+		case '(':
+			
+		case ')':;
+		default:;
+		}
+	}
+}

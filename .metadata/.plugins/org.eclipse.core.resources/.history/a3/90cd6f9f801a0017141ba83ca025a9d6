@@ -1,0 +1,12 @@
+
+public class TreeNode {
+	
+	private Token data;
+	
+	public TreeNode(Token type) {
+		data = type;
+	}
+	
+	public TokenType getType() {return data.type;}
+	public String getData() {return data.string;}
+}

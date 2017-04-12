@@ -1,0 +1,7 @@
+
+public class TreeNode {
+	
+	TokenType type;
+	
+	public TreeNode
+}

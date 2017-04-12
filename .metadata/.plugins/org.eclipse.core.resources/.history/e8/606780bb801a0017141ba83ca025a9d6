@@ -1,0 +1,14 @@
+
+public class Token {
+
+	private TokenType type;
+	private String string;
+	
+	public Token(TokenType t, String str) {
+		string = str;
+		type = t;
+	}
+	
+	public TokenType getType() {return type;}
+	public String getData() {return string;}
+}

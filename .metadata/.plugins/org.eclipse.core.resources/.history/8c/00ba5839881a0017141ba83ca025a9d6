@@ -1,0 +1,14 @@
+import Parser.Parser;
+import Tree.ParseTree;
+
+
+public class Main {
+	
+	public static void main(String[] args) {
+		
+		//String string = "(λf.((λx.(f(xx)))(λx.(f(xx)))))";
+		String string = "(λa.(a(λx.x)))";
+		
+		ParseTree tree = (new Parser(string)).parse();
+	}
+}

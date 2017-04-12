@@ -1,0 +1,15 @@
+
+public abstract class ParseTree {
+	
+	protected TreeNode node;
+	
+	public ParseTree(TreeNode data) {
+		node = data;
+	}
+	
+	public abstract void addLeftChild(ParseTree tree);
+	public abstract void addRightChild(ParseTree tree);
+	
+	public abstract String getNodeData();
+	public abstract TokenType getNodeType();
+}

@@ -1,0 +1,3 @@
+INDEX VERSION 1.126+C:\Users\Kyle\Documents\LispMachine\.metadata\.plugins\org.eclipse.jdt.core
+2946165480.index
+4144608910.index

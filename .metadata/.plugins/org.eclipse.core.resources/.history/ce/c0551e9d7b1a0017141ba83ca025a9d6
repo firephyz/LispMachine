@@ -1,0 +1,6 @@
+
+public abstract class ParseTree {
+	
+	protected ParseTree leftChild;
+	protected ParseTree rightChild;
+}

@@ -1,0 +1,11 @@
+
+public class Token {
+
+	TokenType type;
+	String string;
+	
+	public Token(TokenType t, String str) {
+		string = str;
+		type = t;
+	}
+}

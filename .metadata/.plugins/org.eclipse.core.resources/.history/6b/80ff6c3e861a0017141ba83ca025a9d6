@@ -1,0 +1,65 @@
+package Tree;
+import Parser.TokenType;
+
+
+public class ParseTree {
+	
+	protected TreeNode node;
+	protected ParseTree leftChild;
+	protected ParseTree rightChild;
+	
+	public ParseTree(ParseNodeType type, String data) {
+		node = new TreeNode(data, type);
+	}
+	
+	public ParseTree() {
+		leftChild = null;
+		rightChild = null;
+	}
+	
+	public void addLeftChild(ParseTree tree) {
+		leftChild = tree;
+	}
+	
+	public void addRightChild(ParseTree tree) {
+		rightChild = tree;
+	}
+	
+	public ParseTree getLeftChild() {
+		return leftChild;
+	}
+	
+	public ParseTree getRightChild() {
+		return rightChild;
+	}
+	
+	public String getNodeData() {
+		return node.getData();
+	}
+	public ParseNodeType getNodeType() {
+		return node.getType();
+	}
+	
+	@Override
+	public String toString() {
+		
+		if(node == null) {
+			return "NULL";
+		}
+		
+		String result = node.toString();
+		
+		if(leftChild != null) {
+			result = "(" + result + ", " + leftChild.toString();
+		}
+		
+		if(rightChild != null) {
+			result += ", " + rightChild.toString() + ")";
+		}
+		else if (leftChild != null) {
+			result += ")";
+		}
+		
+		return result;
+	}
+}

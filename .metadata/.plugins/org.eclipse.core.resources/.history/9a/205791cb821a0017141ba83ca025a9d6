@@ -1,0 +1,54 @@
+package Parser;
+
+public class Tokenizer {
+
+	private String string;
+	private int index;
+	
+	public Tokenizer(String str) {
+		string = str;
+		index = 0;
+	}
+	
+	public boolean hasNext() {
+		if(index >= string.length()) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	
+	public Token next() {
+		return findNextToken(false);
+	}
+	
+	public Token peek() {
+		return findNextToken(true);
+	}
+	
+	private Token findNextToken(boolean isPeeking) {
+		switch(string.charAt(index)) {
+		case 'λ':
+			if(!isPeeking) {
+				index += 3;
+			}
+			return new Token(TokenType.Lambda, string.substring(index - 2, index - 1));
+		case '(':
+			if(!isPeeking) {
+				index++;
+			}
+			return new Token(TokenType.L_Parens, null);
+		case ')':
+			if(!isPeeking) {
+				index++;
+			}
+			return new Token(TokenType.R_Parens, null);
+		default:
+			if(!isPeeking) {
+				index++;
+			}
+			return new Token(TokenType.Variable, string.substring(index - 1, index));
+		}
+	}
+}

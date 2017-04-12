@@ -1,0 +1,11 @@
+
+public class TreeNode {
+	
+	private TokenType type;
+	
+	public TreeNode(TokenType type) {
+		this.type = type;
+	}
+	
+	public TokenType getType() {return type;}
+}

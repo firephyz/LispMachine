@@ -1,0 +1,61 @@
+import java.util.Stack;
+
+
+public class Parser {
+	
+	private String string;
+	
+	public Parser(String str) {
+		string = str;
+	}
+	
+	public ParseTree parse() {
+		
+		Tokenizer tk = new Tokenizer(string);
+		ParseTree root = new ParseTree();
+		ParseTree tree = root;
+		
+		Stack<ParseTree> stack = new Stack<>();
+		stack.add(tree);
+		
+		if(string.length() == 0) {
+			return null;
+		}
+		
+		do {
+			Token t = tk.next();
+			
+			switch(t.getType()) {
+			case L_Parens:
+				ParseTree new_node;
+				
+				// See if it's a function or application
+				if(tk.peek().getType() == TokenType.Lambda) {
+					new_node = new ParseTree(ParseNodeType.Function, );
+				}
+				else {
+					new_node = new ParseTree(ParseNodeType.Application);
+				}
+				
+				// Add this new branch to the right side of the tree
+				if(tree.getLeftChild() == null) {
+					tree.addLeftChild(new_node);
+				}
+				else {
+					tree.addRightChild(new_node);
+				}
+				
+				// Update current branch
+				tree = new_node;
+				stack.add(tree);
+				break;
+			case R_Parens:
+				tree = stack.pop();
+				break;
+			case Lambda:
+				tree.node = new TreeNode(ParseNodeType.Function, t.getData());
+			case Variable:;
+			}
+		} while(tk.hasNext());
+	}
+}

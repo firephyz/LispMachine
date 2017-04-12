@@ -1,0 +1,38 @@
+import TokenType;
+
+
+public class ParseTree {
+	
+	protected TreeNode node;
+	protected ParseTree leftChild;
+	protected ParseTree rightChild;
+	
+	public ParseTree(TreeNode data) {
+		node = data;
+		leftChild = null;
+		rightChild = null;
+	}
+	
+	public void addLeftChild(ParseTree tree) {
+		leftChild = tree;
+	}
+	
+	public void addRightChild(ParseTree tree) {
+		rightChild = tree;
+	}
+	
+	public ParseTree getLeftChild() {
+		return leftChild;
+	}
+	
+	public ParseTree getRightChild() {
+		return rightChild;
+	}
+	
+	public String getNodeData() {
+		return node.getData();
+	}
+	public TokenType getNodeType() {
+		return node.type();
+	}
+}

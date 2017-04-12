@@ -24,6 +24,9 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 	reg [`memory_addr_width - 1:0] stack;
 	reg [3:0] calling_func;
 	
+	// General counter for counting things
+	reg [3:0] counter;
+	
 	// Cell type encodings
 	parameter CELL_GENERAL	= 4'h0,
 				 CELL_OPCODE	= 4'h1,
@@ -110,7 +113,10 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 	parameter SYS_LOOKUP_INIT			= 4'h0;
 	
 	// Return states
-	parameter SYS_RETURN_INIT			= 4'h0;
+	parameter SYS_RETURN_INIT					= 4'h0,
+				 SYS_RETURN_RESTORE_CALLING	= 4'h1,
+				 SYS_RETURN_POP_STACK			= 4'h2,
+				 SYS_RETURN_DONE					= 4'h3;
 	
 	output reg [2:0] sys_func; // Records the current system function
 	output reg [3:0] state; // Records the state inside the current system function
@@ -120,13 +126,14 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 			mem_powered_up <= 0;
 			
 			sys_func <= SYS_EVAL;
-			
 			state <= SYS_EVAL_INIT;
 			
 			regs[0] <= 1;
 			regs[1] <= 0;
 			regs[2] <= 0;
 			regs[3] <= 0;
+			
+			stack <= 0;
 		end
 		else if(power && mem_powered_up) begin
 			case(sys_func)
@@ -386,7 +393,78 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				SYS_FUNC_EVARTH:;
 				SYS_FUNC_CONENV:;
 				SYS_FUNC_LOOKUP:;
-				SYS_FUNC_RETURN:;
+				SYS_FUNC_RETURN: begin
+					case(state)
+						SYS_RETURN_INIT: begin
+							mem_addr0 <= stack;
+							mem_func <= `GET_CONTENTS;
+							mem_execute <= 1;
+							
+							state <= SYS_RETURN_RESTORE_CALLING;
+						end
+						SYS_RETURN_RESTORE_CALLING: begin
+							if(mem_ready) begin
+								calling_func <= mem_data[19:10];
+								stack <= mem_data[9:0];
+								
+								mem_addr0 <= stack;
+								mem_func <= `GET_CONTENTS;
+								mem_execute <= 1;
+								
+								state <= SYS_RETURN_POP_STACK;
+								counter <= 0;
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_func <= 0;
+								mem_execute <= 0;
+							end
+						end
+						SYS_RETURN_POP_STACK: begin
+							if(mem_ready) begin
+								// We reached the end of this frame
+								if(mem_data[23:20] == CELL_RETURN || mem_data == 0) begin
+									state <= SYS_RETURN_DONE;
+								end
+								// We have more to pop and store in the regs
+								else begin
+									regs[counter] <= mem_data[19:10];
+									stack <= mem_data[9:0];
+									counter <= counter + 4'b1;
+									
+									mem_addr0 <= stack;
+									mem_func <= `GET_CONTENTS;
+									mem_execute <= 1;
+								end
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_func <= 0;
+								mem_execute <= 0;
+							end
+						end
+						SYS_RETURN_DONE: begin
+							state <= 0;
+							case(calling_func)
+								SYS_EVAL: begin
+									sys_func <= SYS_EVAL;
+									state <= SYS_EVAL_EVLIS_CONT;
+								end
+								SYS_APPLY_0:;
+								SYS_APPLY_1:;
+								SYS_APPLY_2:;
+								SYS_EVLIS_0:;
+								SYS_EVLIS_1:;
+								SYS_EVIF:;
+								SYS_EVBEGIN:;
+								SYS_CONENV:;
+								SYS_RETURN:;
+								SYS_REPL:;
+								default:;
+							endcase
+						end
+					endcase
+				end
 				default:;
 			endcase
 		end

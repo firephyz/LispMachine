@@ -1,0 +1,20 @@
+
+public class Parser {
+	
+	private String string;
+	
+	public Parser(String str) {
+		string = str;
+	}
+	
+	public ParseTree parse() {
+		
+		Tokenizer tk = new Tokenizer(string);
+		ParseTree result = new ParseTree();
+		ParseTree tree = result;
+		
+		do {
+			
+		} while(tk.hasNext());
+	}
+}

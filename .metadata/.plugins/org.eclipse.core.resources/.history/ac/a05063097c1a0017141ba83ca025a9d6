@@ -1,0 +1,14 @@
+
+public class Parser {
+	
+	private String string;
+	
+	public Parser(String str) {
+		string = str;
+	}
+	
+	public parse() {
+		
+		Tokenizer tk = new Tokenizer(string);
+	}
+}
