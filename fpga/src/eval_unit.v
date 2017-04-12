@@ -69,14 +69,15 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				 SYS_REPL		= 4'hA;
 	
 	// System functions for use with sys_func
-	parameter SYS_FUNC_EVAL		= 3'h0,
-				 SYS_FUNC_APPLY	= 3'h1,
-				 SYS_FUNC_EVLIS	= 3'h2,
-				 SYS_FUNC_EVIF		= 3'h3,
-				 SYS_FUNC_EVARTH	= 3'h4,
-				 SYS_FUNC_CONENV	= 3'h5,
-				 SYS_FUNC_LOOKUP	= 3'h6,
-				 SYS_FUNC_RETURN	= 3'h7;
+	parameter SYS_FUNC_EVAL		= 4'h0,
+				 SYS_FUNC_APPLY	= 4'h1,
+				 SYS_FUNC_EVLIS	= 4'h2,
+				 SYS_FUNC_EVIF		= 4'h3,
+				 SYS_FUNC_EVARTH	= 4'h4,
+				 SYS_FUNC_CONENV	= 4'h5,
+				 SYS_FUNC_LOOKUP	= 4'h6,
+				 SYS_FUNC_RETURN	= 4'h7,
+				 SYS_FUNC_PUSH		= 4'h8;
 				 
 	// Eval states
 	parameter SYS_EVAL_INIT 			= 4'h0,
@@ -118,14 +119,18 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				 SYS_RETURN_POP_STACK			= 4'h2,
 				 SYS_RETURN_DONE					= 4'h3;
 	
-	output reg [2:0] sys_func; // Records the current system function
+	// System push
+	parameter SYS_PUSH_INIT				= 4'h0,
+				 SYS_PUSH_0					= 4'h1;
+	
+	output reg [3:0] sys_func; // Records the current system function
 	output reg [3:0] state; // Records the state inside the current system function
 	
 	always@(posedge clk or negedge rst) begin
 		if(!rst) begin
 			mem_powered_up <= 0;
 			
-			sys_func <= SYS_EVAL;
+			sys_func <= SYS_FUNC_EVAL;
 			state <= SYS_EVAL_INIT;
 			
 			regs[0] <= 1;
@@ -238,6 +243,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 								OP_BEGIN:; // TODO
 								default: begin
 									calling_func <= SYS_EVAL;
+									sys_func
 									state <= SYS_EVAL_PUSH_0;
 									
 									mem_type_info <= 0;
@@ -392,7 +398,13 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				SYS_FUNC_EVIF:;
 				SYS_FUNC_EVARTH:;
 				SYS_FUNC_CONENV:;
-				SYS_FUNC_LOOKUP:;
+				SYS_FUNC_LOOKUP: begin
+					case(state)
+						SYS_LOOKUP_INIT: begin
+						
+						end
+					endcase
+				end
 				SYS_FUNC_RETURN: begin
 					case(state)
 						SYS_RETURN_INIT: begin
@@ -404,7 +416,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 						end
 						SYS_RETURN_RESTORE_CALLING: begin
 							if(mem_ready) begin
-								calling_func <= mem_data[19:10];
+								calling_func <= mem_data[13:10];
 								stack <= mem_data[9:0];
 								
 								mem_addr0 <= stack;
@@ -447,7 +459,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 							state <= 0;
 							case(calling_func)
 								SYS_EVAL: begin
-									sys_func <= SYS_EVAL;
+									sys_func <= SYS_FUNC_EVAL;
 									state <= SYS_EVAL_EVLIS_CONT;
 								end
 								SYS_APPLY_0:;
