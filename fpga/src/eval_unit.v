@@ -23,8 +23,10 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 	
 	reg [`memory_addr_width - 1:0] stack;
 	reg [3:0] calling_func;
+	reg [1:0] arg_push_count;
+	reg [`memory_addr_width - 1:0] push_regs [0:3];
 	
-	// General counter for counting things
+	// General counter for counting things.
 	reg [3:0] counter;
 	
 	// Cell type encodings
@@ -56,7 +58,8 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				 OP_BEGIN		= 8'h12;
 				 
 	// Calling function encodings
-	parameter SYS_EVAL		= 4'h0,
+	parameter SYS_EVAL_0		= 4'h0,
+				 SYS_EVAL_1		= 4'hF, // TODO Put in right order once we figure out the code associated with this
 				 SYS_APPLY_0	= 4'h1,
 				 SYS_APPLY_1	= 4'h2,
 				 SYS_APPLY_2	= 4'h3,
@@ -65,18 +68,24 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				 SYS_EVIF		= 4'h6,
 				 SYS_EVBEGIN	= 4'h7,
 				 SYS_CONENV		= 4'h8,
-				 SYS_RETURN		= 4'h9,
-				 SYS_REPL		= 4'hA;
+				 SYS_LOOKUP		= 4'h9,
+				 SYS_RETURN		= 4'hA,
+				 SYS_EQ			= 4'hB,
+				 SYS_REPL		= 4'hC;
 	
 	// System functions for use with sys_func
-	parameter SYS_FUNC_EVAL		= 3'h0,
-				 SYS_FUNC_APPLY	= 3'h1,
-				 SYS_FUNC_EVLIS	= 3'h2,
-				 SYS_FUNC_EVIF		= 3'h3,
-				 SYS_FUNC_EVARTH	= 3'h4,
-				 SYS_FUNC_CONENV	= 3'h5,
-				 SYS_FUNC_LOOKUP	= 3'h6,
-				 SYS_FUNC_RETURN	= 3'h7;
+	parameter SYS_FUNC_EVAL		= 4'h0,
+				 SYS_FUNC_APPLY	= 4'h1,
+				 SYS_FUNC_EVLIS	= 4'h2,
+				 SYS_FUNC_EVIF		= 4'h3,
+				 SYS_FUNC_EVARTH	= 4'h4,
+				 SYS_FUNC_CONENV	= 4'h5,
+				 SYS_FUNC_LOOKUP	= 4'h6,
+				 SYS_FUNC_RETURN	= 4'h7,
+				 SYS_FUNC_PUSH		= 4'h8, // Don't need a pop because it's only
+												  // called once. Effectively inlined it
+				 SYS_FUNC_EQ		= 4'h9,
+				 SYS_FUNC_ERROR	= 4'hA;
 				 
 	// Eval states
 	parameter SYS_EVAL_INIT 			= 4'h0,
@@ -110,13 +119,29 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 	parameter SYS_CONENV_INIT			= 4'h0;
 	
 	// Lookup states
-	parameter SYS_LOOKUP_INIT			= 4'h0;
+	parameter SYS_LOOKUP_INIT			= 4'h0,
+				 SYS_LOOKUP_SETUP_REGS_0 = 4'h1,
+				 SYS_LOOKUP_SETUP_REGS_1 = 4'h2,
+				 SYS_LOOKUP_SETUP_REGS_2 = 4'h3,
+				 SYS_LOOKUP_CHECK_EQ		= 4'h4;
 	
 	// Return states
 	parameter SYS_RETURN_INIT					= 4'h0,
 				 SYS_RETURN_RESTORE_CALLING	= 4'h1,
 				 SYS_RETURN_POP_STACK			= 4'h2,
 				 SYS_RETURN_DONE					= 4'h3;
+				 
+	// Push states
+	parameter SYS_PUSH_INIT				= 4'h0,
+				 SYS_PUSH_WAIT_CONS		= 4'h1,
+				 SYS_PUSH_LAST_PART		= 4'h2,
+				 SYS_PUSH_LAST_WAIT		= 4'h3;
+				 
+	// Eq states
+	parameter SYS_EQ_INIT			= 4'h0,
+				 SYS_EQ_FETCH_FIRST	= 4'h1,
+				 SYS_EQ_FETCH_SECOND = 4'h2,
+				 SYS_EQ_CHECK			= 4'h3;
 	
 	output reg [2:0] sys_func; // Records the current system function
 	output reg [3:0] state; // Records the state inside the current system function
@@ -125,7 +150,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 		if(!rst) begin
 			mem_powered_up <= 0;
 			
-			sys_func <= SYS_EVAL;
+			sys_func <= SYS_FUNC_EVAL;
 			state <= SYS_EVAL_INIT;
 			
 			regs[0] <= 1;
@@ -137,7 +162,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 		end
 		else if(power && mem_powered_up) begin
 			case(sys_func)
-				SYS_EVAL: begin
+				SYS_FUNC_EVAL: begin
 					case (state)
 						SYS_EVAL_INIT: begin
 							mem_addr0 <= regs[0];
@@ -237,72 +262,24 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 								OP_DEFINE:; // TODO
 								OP_BEGIN:; // TODO
 								default: begin
-									calling_func <= SYS_EVAL;
-									state <= SYS_EVAL_PUSH_0;
+									calling_func <= SYS_EVAL_0;
+									arg_push_count <= 2;
 									
-									mem_type_info <= 0;
-									mem_addr0 <= regs[1];
-									mem_addr1 <= stack;
-									mem_func <= `GET_CONS;
-									mem_execute <= 1;
+									sys_func = SYS_FUNC_PUSH;
+									state <= SYS_PUSH_INIT;
 								end
 							endcase
 						end
-						SYS_EVAL_PUSH_0: begin
-							if(mem_ready) begin
-								state <= SYS_EVAL_PUSH_1;
-									
-								mem_type_info <= 0;
-								mem_addr0 <= regs[0];
-								mem_addr1 <= mem_addr;
-								mem_func <= `GET_CONS;
-								mem_execute <= 1;
-							end
-							else begin
-								mem_type_info <= 0;
-								mem_addr0 <= 0;
-								mem_addr1 <= 0;
-								mem_func <= 0;
-								mem_execute <= 0;
-							end
-						end
-						SYS_EVAL_PUSH_1: begin
-							if(mem_ready) begin
-								state <= SYS_EVAL_EVLIS_SETUP;
-									
-								mem_type_info <= CELL_RETURN;
-								mem_addr0 <= {6'h00, calling_func};
-								mem_addr1 <= mem_addr;
-								mem_func <= `GET_CONS;
-								mem_execute <= 1;
-							end
-							else begin
-								mem_type_info <= 0;
-								mem_addr0 <= 0;
-								mem_addr1 <= 0;
-								mem_func <= 0;
-								mem_execute <= 0;
-							end
-						end
 						SYS_EVAL_EVLIS_SETUP: begin
-							if(mem_ready) begin
-								stack <= mem_addr; // Save the stack from all the previous operations
-								
-								regs[0] <= data_regs[0][9:0];
-								regs[1] <= regs[1];
-								regs[2] <= 0;
-								regs[3] <= 0;
-								
-								state <= SYS_EVLIS_INIT;
-								sys_func <= SYS_FUNC_EVLIS;
-							end
-							else begin
-								mem_type_info <= 0;
-								mem_addr0 <= 0;
-								mem_addr1 <= 0;
-								mem_func <= 0;
-								mem_execute <= 0;
-							end
+							stack <= mem_addr; // Save the stack from all the previous operations
+							
+							regs[0] <= data_regs[0][9:0];
+							regs[1] <= regs[1];
+							regs[2] <= 0;
+							regs[3] <= 0;
+							
+							state <= SYS_EVLIS_INIT;
+							sys_func <= SYS_FUNC_EVLIS;
 						end
 						SYS_EVAL_EVLIS_CONT: begin
 							mem_addr0 <= regs[0];
@@ -392,7 +369,81 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				SYS_FUNC_EVIF:;
 				SYS_FUNC_EVARTH:;
 				SYS_FUNC_CONENV:;
-				SYS_FUNC_LOOKUP:;
+				SYS_FUNC_LOOKUP: begin
+					case(state)
+						SYS_LOOKUP_INIT: begin
+							// Symbol wasn't found
+							if(regs[1] == 0) begin
+								sys_func <= SYS_FUNC_ERROR;
+								state <= 0;
+							end
+							// Else, begin checking if symbols are eq
+							else begin
+								calling_func <= SYS_LOOKUP;
+								arg_push_count <= 2;
+								
+								sys_func <= SYS_FUNC_PUSH;
+								state <= SYS_PUSH_INIT;
+							end
+						end
+						// Setup regs for the call to eq
+						SYS_LOOKUP_SETUP_REGS_0: begin
+							state <= SYS_LOOKUP_SETUP_REGS_1;
+						
+							mem_addr0 <= regs[1];
+							mem_execute <= 1;
+							mem_func <= `GET_CONTENTS;
+						end
+						SYS_LOOKUP_SETUP_REGS_1: begin
+							if(mem_ready) begin
+								state <= SYS_LOOKUP_SETUP_REGS_2;
+							
+								data_regs[1] <= mem_data; // Store for later
+								mem_addr0 <= mem_data[19:10];
+								mem_execute <= 1;
+								mem_func <= `GET_CONTENTS;
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_execute <= 0;
+								mem_func <= 0;
+							end
+						end
+						SYS_LOOKUP_SETUP_REGS_2: begin
+							if(mem_ready) begin
+								sys_func <= SYS_FUNC_EQ;
+								state <= SYS_EQ_INIT;
+							
+								data_regs[0] <= mem_data; // Store for later
+								regs[1] <= regs[0];
+								regs[0] <= mem_data[9:0];
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_execute <= 0;
+								mem_func <= 0;
+							end
+						end
+						SYS_LOOKUP_CHECK_EQ: begin
+							if(result) begin
+								result <= data_regs[0][9:0];
+								
+								sys_func <= SYS_FUNC_RETURN;
+								state <= SYS_RETURN_INIT;
+							end
+							else begin
+								regs[0] <= regs[0];
+								regs[1] <= data_regs[1][9:0];
+								regs[2] <= 0;
+								regs[3] <= 0;
+								
+								sys_func <= SYS_FUNC_LOOKUP;
+								state <= SYS_LOOKUP_INIT;
+							end
+						end
+						default:;
+					endcase
+				end
 				SYS_FUNC_RETURN: begin
 					case(state)
 						SYS_RETURN_INIT: begin
@@ -446,9 +497,13 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 						SYS_RETURN_DONE: begin
 							state <= 0;
 							case(calling_func)
-								SYS_EVAL: begin
-									sys_func <= SYS_EVAL;
+								SYS_EVAL_0: begin
+									sys_func <= SYS_FUNC_EVAL;
 									state <= SYS_EVAL_EVLIS_CONT;
+								end
+								SYS_EVAL_1: begin
+									sys_func <= SYS_FUNC_EVAL;
+									state <= 0; // TODO FIX
 								end
 								SYS_APPLY_0:;
 								SYS_APPLY_1:;
@@ -458,6 +513,14 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 								SYS_EVIF:;
 								SYS_EVBEGIN:;
 								SYS_CONENV:;
+								SYS_LOOKUP: begin
+									sys_func <= SYS_FUNC_LOOKUP;
+									state <= SYS_LOOKUP_SETUP_REGS_0;
+								end
+								SYS_EQ: begin
+									sys_func <= SYS_FUNC_LOOKUP;
+									state <= SYS_LOOKUP_CHECK_EQ;
+								end
 								SYS_RETURN:;
 								SYS_REPL:;
 								default:;
@@ -465,6 +528,165 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 						end
 					endcase
 				end
+				SYS_FUNC_PUSH: begin
+					case(state)
+						SYS_PUSH_INIT: begin
+							// Catch the case when the push_arg_count == 0 upon the SYS_FUNC_PUSH call
+							if(arg_push_count != 0) begin
+								mem_type_info <= CELL_GENERAL;
+								mem_addr0 <= regs[arg_push_count - 2'b1];
+								mem_addr1 <= stack;
+								mem_func <= `GET_CONS;
+								mem_execute <= 1;
+								state <= SYS_PUSH_WAIT_CONS;
+							end
+							else begin
+								state <= SYS_PUSH_LAST_WAIT;
+							end
+						end
+						SYS_PUSH_WAIT_CONS: begin
+							if(mem_ready) begin
+								arg_push_count <= arg_push_count - 2'b1;
+								stack <= mem_addr;
+								
+								// If arg_push_count will be 0 next clock, move on
+								if(arg_push_count == 1) begin
+									state <= SYS_PUSH_LAST_PART;
+								end
+								// Else we have more arguments to push. Do so
+								else begin
+									state <= SYS_PUSH_INIT;
+								end
+							end
+							else begin
+								mem_type_info <= 0;
+								mem_addr0 <= 0;
+								mem_addr1 <= 0;
+								mem_func <= 0;
+								mem_execute <= 0;
+							end
+						end
+						SYS_PUSH_LAST_PART: begin
+							mem_type_info <= CELL_RETURN;
+							mem_addr0 <= {20'b0, calling_func};
+							mem_addr1 <= stack;
+							mem_func <= `GET_CONS;
+							mem_execute <= 1;
+							
+							state <= SYS_PUSH_LAST_WAIT;
+						end
+						SYS_PUSH_LAST_WAIT: begin
+							// TODO figure out what this does
+							if(mem_ready) begin
+								stack <= mem_addr;
+								
+								// Continue executing the previous system function
+								// before the call to SYS_PUSH
+								case(calling_func)
+									SYS_EVAL_0: begin
+										sys_func <= SYS_FUNC_EVAL;
+										state <= SYS_EVAL_EVLIS_SETUP;
+									end
+									SYS_LOOKUP: begin
+										sys_func <= SYS_FUNC_LOOKUP;
+										state <= SYS_LOOKUP_SETUP_REGS_0;
+									end
+									default:;
+								endcase
+							end
+							else begin
+								mem_type_info <= 0;
+								mem_addr0 <= 0;
+								mem_addr1 <= 0;
+								mem_func <= 0;
+								mem_execute <= 0;
+							end
+						end
+						default:;
+					endcase
+				end
+				SYS_FUNC_EQ: begin
+					case(state)
+						SYS_EQ_INIT: begin
+							mem_addr0 <= regs[0];
+							mem_execute <= 1;
+							mem_func <= `GET_CONTENTS;
+							
+							state <= SYS_EQ_FETCH_FIRST;
+						end
+						SYS_EQ_FETCH_FIRST: begin
+							// Fetch reg[0]
+							if(mem_ready) begin
+								data_regs[2] <= mem_data; // regs 0 and 1 are already in use by lookup
+
+								mem_addr0 <= regs[1];
+								mem_execute <= 1;
+								mem_func <= `GET_CONTENTS;
+								
+								state <= SYS_EQ_FETCH_SECOND;
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_execute <= 0;
+								mem_func <= 0;
+							end
+						end
+						// Fetch reg[1]
+						SYS_EQ_FETCH_SECOND: begin
+							if(mem_ready) begin
+								data_regs[3] <= mem_data;
+								state <= SYS_EQ_CHECK;
+							end
+							else begin
+								mem_addr0 <= 0;
+								mem_execute <= 0;
+								mem_func <= 0;
+							end
+						end
+						SYS_EQ_CHECK: begin
+							// Get cells are of the right type
+							if(data_regs[2] >> 20 != CELL_SYMBOL || data_regs[3] >> 20 != CELL_SYMBOL) begin
+								sys_func <= SYS_FUNC_ERROR;
+								state <= 0;
+							end
+							else if(data_regs[2][19:10] == data_regs[3][19:10]) begin
+							
+								// If both symbols are done, they are equal
+								if(data_regs[2][9:0] == 0 && data_regs[3][9:0] == 0) begin
+									result <= 1;
+									
+									sys_func <= SYS_FUNC_RETURN;
+									state <= SYS_RETURN_INIT;
+								end
+								// If one is done before the other, they are not equal
+								else if(data_regs[2][9:0] == 0 ^ data_regs[3][9:0] == 0) begin
+									result <= 0;
+									
+									sys_func <= SYS_FUNC_RETURN;
+									state <= SYS_RETURN_INIT;
+								end
+								// If they are both no done, recursively call eq again
+								else begin
+									regs[0] <= data_regs[2][9:0];
+									regs[1] <= data_regs[3][9:0];
+									regs[2] <= 0;
+									regs[3] <= 0;
+									
+									sys_func <= SYS_FUNC_EQ;
+									state <= SYS_EQ_INIT;
+								end
+							end
+							else begin
+								result <= 0;
+								
+								sys_func <= SYS_FUNC_RETURN;
+								state <= SYS_RETURN_INIT;
+							end
+						end
+						default:;
+					endcase
+				end
+				SYS_FUNC_ERROR:;
 				default:;
 			endcase
 		end

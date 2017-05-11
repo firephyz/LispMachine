@@ -9,7 +9,7 @@ public class Main {
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		
-		String string = "((lambda (x y) (if x y (quote nope))) x)";
+		String string = "(ab)";
 		//String string = "((quote true) (quote false))";
 		//String string = "(quote tes)";
 		//String string = "(if a b c)";

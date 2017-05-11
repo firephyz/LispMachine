@@ -78,7 +78,6 @@ set_global_assignment -name VERILOG_FILE src/LispMachine.v
 set_global_assignment -name VERILOG_INCLUDE_FILE src/ALU.vh
 set_global_assignment -name VECTOR_WAVEFORM_FILE Waveform.vwf
 set_global_assignment -name CDF_FILE Chain1.cdf
-set_global_assignment -name SIGNALTAP_FILE stp1.stp
 set_global_assignment -name QIP_FILE ram.qip
 set_global_assignment -name HEX_FILE memory.hex
 set_global_assignment -name VERILOG_FILE src/memory_unit.v
