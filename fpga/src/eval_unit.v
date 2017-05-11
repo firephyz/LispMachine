@@ -143,7 +143,11 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 				 SYS_EQ_FETCH_SECOND = 4'h2,
 				 SYS_EQ_CHECK			= 4'h3;
 	
-	output reg [2:0] sys_func; // Records the current system function
+	// System push
+	parameter SYS_PUSH_INIT				= 4'h0,
+				 SYS_PUSH_0					= 4'h1;
+	
+	output reg [3:0] sys_func; // Records the current system function
 	output reg [3:0] state; // Records the state inside the current system function
 	
 	always@(posedge clk or negedge rst) begin
@@ -455,7 +459,7 @@ module eval_unit(mem_ready, mem_func, mem_execute, mem_addr0, mem_addr1, mem_typ
 						end
 						SYS_RETURN_RESTORE_CALLING: begin
 							if(mem_ready) begin
-								calling_func <= mem_data[19:10];
+								calling_func <= mem_data[13:10];
 								stack <= mem_data[9:0];
 								
 								mem_addr0 <= stack;
