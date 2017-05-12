@@ -8,7 +8,7 @@
 
 `include "memory_unit.vh"
 
-module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, is_ready, power, clk, rst);
+module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, is_ready, power, clk, rst, state, mem_data_out);
 
 	input power, clk, rst;
 
@@ -29,13 +29,11 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 	reg [`memory_addr_width - 1:0] mem_addr;
 	reg mem_write;
 	reg [`memory_data_width - 1:0] mem_data_in;
-	wire [`memory_data_width - 1:0] mem_data_out;
+	output wire [`memory_data_width - 1:0] mem_data_out;
 	
 	// Internal regs and wires
-	reg need_car_or_cdr; // 0 for car, 1 for cdr
-	reg should_fetch_data;
 	reg [`memory_addr_width - 1:0] free_mem;
-	reg [3:0] state;
+	output reg [3:0] state;
 	
 	// States
 	parameter STATE_INIT_SETUP 	= 4'h0,
@@ -65,8 +63,6 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 			mem_data_in <= 0;
 			
 			is_ready_reg <= 0;
-			need_car_or_cdr <= 0;
-			should_fetch_data <= 0;
 		end
 		else if (power) begin
 			case (state)
@@ -93,6 +89,7 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 				end
 				STATE_INIT_WAIT_1: begin
 					state <= STATE_WAIT;
+					addr_out <= free_mem - 10'b1;
 					
 					mem_write <= 0;
 				end
@@ -102,17 +99,11 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 						is_ready_reg <= 0;
 						// Dispatch according to the function
 						case (func)
-							`GET_CAR: begin
-								need_car_or_cdr <= 0;
-								should_fetch_data <= 0;
-								mem_addr <= addr0;
-								state <= STATE_READ_WAIT_0;
+							`SET_CAR: begin
+							
 							end
-							`GET_CDR: begin
-								need_car_or_cdr <= 1;
-								should_fetch_data <= 0;
-								mem_addr <= addr0;
-								state <= STATE_READ_WAIT_0;
+							`SET_CDR: begin
+							
 							end
 							`GET_CONS: begin
 								mem_data_in <= {type_info, addr0, addr1};
@@ -121,7 +112,6 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 								state <= STATE_CONS_WAIT;
 							end
 							`GET_CONTENTS: begin
-								should_fetch_data <= 1;
 								mem_addr <= addr0;
 								state <= STATE_READ_WAIT_0;
 							end
@@ -145,18 +135,7 @@ module memory_unit(func, execute, addr0, addr1, type_info, addr_out, data_out, i
 					state <= STATE_WAIT;
 					is_ready_reg <= 1;
 					
-					// Output the correct data
-					if(should_fetch_data) begin
-						data_out <= mem_data_out;
-					end
-					else begin
-						if(need_car_or_cdr) begin
-							addr_out <= mem_data_out[9:0];
-						end
-						else begin
-							addr_out <= mem_data_out[19:10];
-						end
-					end
+					data_out <= mem_data_out;
 				end
 				// Return a new cell
 				STATE_CONS_WAIT: begin

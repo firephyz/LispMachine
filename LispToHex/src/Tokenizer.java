@@ -45,7 +45,7 @@ public class Tokenizer {
 		
 		int opcode = getOpcode(string);
 		
-		if(opcode > 0) {
+		if(opcode >= 0) {
 			return SymbolType.Opcode;
 		}
 		else if (string.equals("true") || string.equals("false")) {

@@ -1,6 +1,10 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -9,7 +13,8 @@ public class Main {
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		
-		String string = "(ab)";
+		//String string = "((lambda (x) (eq? x (quote a))) (quote a))";
+		String string = "(if (eq? (quote a) (quote a)) (cdr (+ 1 1)) (cdr (+ 2 2)))";
 		//String string = "((quote true) (quote false))";
 		//String string = "(quote tes)";
 		//String string = "(if a b c)";
@@ -69,10 +74,10 @@ public class Main {
 	
 	public static void outputTree(Cell cell) throws FileNotFoundException {
 		
+		int cellCount = 0;
+		ArrayList<Integer> nums = new ArrayList<>();
 		File data = new File("data.txt");
 		PrintWriter out = new PrintWriter(data);
-		
-		out.println(0);
 		
 		Stack<Cell> stack = new Stack<>();
 		stack.push(cell);
@@ -83,7 +88,8 @@ public class Main {
 			
 			int finalResult = formatData(cell);
 			
-			out.printf("%d\n", finalResult);
+			nums.add(finalResult);
+			++cellCount;
 			
 			if(cell.cdr != null && cell.cdr.cell_index != 0) {
 				stack.push(cell.cdr);
@@ -93,6 +99,19 @@ public class Main {
 				stack.push(cell.car);
 			}
 		}
+		
+		out.println(cellCount + 2);
+		for(Integer i : nums) {
+			out.printf("%d\n", i);
+		}
+		
+		// Write the return cell onto the stack. This will
+		// be the only thing on the system stack when the machine starts.
+		// Tells the machine that the calling function for SYS_EVAL was
+		// the repl so it should stop once it reaches this point.
+		// (haven't implemented the repl yet)
+		// (actually repl should be software so this calling function just needs to be renamed)
+		out.printf("%d\n", 0x503C00);
 		
 		out.close();
 	}
